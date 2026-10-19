@@ -30,7 +30,7 @@ button { font: inherit; color: inherit; }
   display: flex; align-items: center; justify-content: space-between; gap: 16px;
 }
 .brand { display: flex; align-items: center; gap: 14px; min-width: 0; }
-.brand__mark { font-weight: 300; letter-spacing: .32em; font-size: 20px; }
+.brand__logo { display: block; width: auto; height: 18px; color: #fff; flex: 0 0 auto; }
 .brand__title { color: #bdbdbd; font-size: 14px; border-left: 1px solid #3a3a3a; padding-left: 14px; white-space: nowrap; }
 .lang { display: flex; background: #222; border-radius: 999px; padding: 3px; }
 .lang__btn {
