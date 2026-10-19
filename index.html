@@ -38,6 +38,29 @@
 
       <form id="form" novalidate autocomplete="on">
         <div class="field">
+          <span class="field__label" id="design-label" data-i18n="fDesign">Signature design</span>
+          <div class="designs" role="radiogroup" aria-labelledby="design-label">
+            <label class="design">
+              <input type="radio" name="design" value="classic" checked>
+              <span class="thumb" aria-hidden="true">
+                <span class="thumb__row"><span class="thumb__ph"></span><span class="thumb__lines"><b class="w70"></b><b class="w90"></b><b class="w60"></b></span></span>
+                <b class="thumb__banner"></b>
+              </span>
+              <span class="design__name">Classic</span>
+            </label>
+            <label class="design">
+              <input type="radio" name="design" value="modern">
+              <span class="thumb" aria-hidden="true">
+                <span class="thumb__row"><span class="thumb__ph thumb__ph--round"></span><span class="thumb__lines"><b class="w60"></b><b class="w40 thumb__muted"></b></span></span>
+                <span class="thumb__cols"><b></b><b></b></span>
+                <b class="thumb__bar"></b>
+              </span>
+              <span class="design__name">Modern</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="field">
           <label for="name"><span data-i18n="fName">Full name</span> <span class="req">*</span></label>
           <input id="name" name="name" type="text" autocomplete="name" placeholder="John Smith" maxlength="60" required>
         </div>

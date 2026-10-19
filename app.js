@@ -46,12 +46,21 @@
   // Іконки соцмереж і месенджерів під контактами: круглі, 22px (файли 44×44 для Retina).
   var SOCIAL = { size: 22, gap: 8 };
   // Кнопка «Book a meeting» у рядку з іконками: та сама висота, що й іконки; без картинок, тож видно і з вимкненими зображеннями.
+  // Дизайн Modern: кругле фото поруч з іменем, контакти колонками з підписами, сіра плашка з іконками й кнопкою.
+  var MODERN = {
+    photo: 56, photoGap: 14, section: 16, colGap: 32, colGapY: 6,
+    muted: '#6B6B6B', label: '#8A8A8A',
+    barBg: '#F2F2F2', barRadius: 12, barPadY: 8, barPadX: 10, buttonHeight: 26
+  };
+  var DESIGNS = ['classic', 'modern'];
+  var DEFAULT_DESIGN = 'classic';
   var MEETING = { text: 'Book a meeting', height: 22, padX: 12, gapAfter: 12, bg: '#222222', color: '#FFFFFF' };
 
   var I18N = {
     uk: {
       appTitle: 'Email-підпис',
       formTitle: 'Ваші дані',
+      fDesign: 'Дизайн підпису',
       formLead: 'Заповніть поля латиницею — підпис оновлюється одразу.',
       fName: "Ім'я та прізвище",
       fTitle: 'Посада',
@@ -120,6 +129,7 @@
     en: {
       appTitle: 'Email signature',
       formTitle: 'Your details',
+      fDesign: 'Signature design',
       formLead: 'Fill in the fields in Latin characters — the signature updates instantly.',
       fName: 'Full name',
       fTitle: 'Job title',
@@ -279,9 +289,18 @@
     d.promo = $('promo').value;
     d.waSame = $('waSame').checked;
     d.meetingStyle = meetingStyle();
+    d.design = design();
     return d;
   }
 
+  function design() {
+    var r = document.querySelector('input[name="design"]:checked');
+    return r && DESIGNS.indexOf(r.value) !== -1 ? r.value : DEFAULT_DESIGN;
+  }
+  function setDesign(v) {
+    var value = DESIGNS.indexOf(v) !== -1 ? v : DEFAULT_DESIGN;
+    document.querySelectorAll('input[name="design"]').forEach(function (r) { r.checked = r.value === value; });
+  }
   function meetingStyle() {
     var r = document.querySelector('input[name="meetingStyle"]:checked');
     return r && r.value === 'icon' ? 'icon' : 'button';
@@ -306,116 +325,186 @@
 
   // ---------- signature markup ----------
   // Таблична верстка + inline-стилі: Gmail вирізає <style>, Outlook (Word) не знає flex/grid/max-width.
-  // Ширина банера задана атрибутом width (для Outlook) та width:100%/max-width (для адаптиву в решті клієнтів).
-  function buildSignature(d) {
-    var base = assetBase();
-    var name = d.name || 'John Smith';
-    var title = d.title || 'Marketing Manager';
-    var text = 'font-family:' + FONT + ';font-size:14px;line-height:21px;mso-line-height-rule:exactly;color:' + INK + ';';
-    var link = 'color:' + INK + ';text-decoration:none;';
+  // Два дизайни (Classic, Modern) збираються зі спільних частин: лінія, іконки, кнопка зустрічі, промо-блок.
+  var TABLE = '<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">';
 
-    // Ім'я окремим блоком: Outlook застосовує line-height до всього абзацу, тож різні висоти рядків мають бути в різних блоках.
-    var nameBlock = '<div style="font-size:' + NAME.fontSize + 'px;line-height:' + NAME.lineHeight + 'px;mso-line-height-rule:exactly;font-weight:700;">' + esc(name) + '</div>';
-    var lines = [esc(title) + ' | ' + COMPANY];
-    // Поки форма порожня, у прев'ю показуємо приклад повністю, разом з телефоном.
-    var pristine = !d.name && !d.title && !d.mobile && !d.email;
-    var mobile = d.mobile || (pristine ? '+380 50 123 4567' : '');
-    if (mobile) {
-      lines.push('<b style="font-weight:700;">Mobile:</b> <a href="' + esc(telHref(mobile)) + '" style="' + link + '">' + esc(mobile) + '</a>');
-    }
-    var email = d.email || 'smith.j@ajax.systems';
-    lines.push('<b style="font-weight:700;">Email:</b> <a href="mailto:' + esc(email) + '" style="' + link + '">' + esc(email) + '</a>');
+  function fontStyle(size, lineHeight, color, extra) {
+    return 'font-family:' + FONT + ';font-size:' + size + 'px;line-height:' + lineHeight + 'px;mso-line-height-rule:exactly;color:' + color + ';' + (extra || '');
+  }
 
-    // Лінія через border-top на комірці: так її однаково малюють Gmail, Apple Mail і Outlook (Word).
-    var rows = ['<tr><td height="' + DIVIDER.gap + '" style="border-top:1px solid ' + DIVIDER.color + ';height:' + DIVIDER.gap + 'px;' +
-      'line-height:' + DIVIDER.gap + 'px;font-size:1px;mso-line-height-rule:exactly;padding:0;">&nbsp;</td></tr>'];
-    var socials = socialLinks(d);
-    var meeting = d.meetingStyle === 'icon' ? '' : meetingUrl(d.meeting);
-    var socialRow = '';
-    if (socials.length || meeting) {
-      // Кнопка: комірка з bgcolor (Outlook) + border-radius (решта клієнтів; у класичному Outlook кути прямі).
-      var button = !meeting ? '' :
-        '<td style="padding:8px ' + (socials.length ? MEETING.gapAfter : 0) + 'px 0 0;vertical-align:top;">' +
-          '<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:separate;"><tr>' +
-            '<td bgcolor="' + MEETING.bg + '" style="background:' + MEETING.bg + ';border-radius:' + (MEETING.height / 2) + 'px;mso-padding-alt:0 ' + MEETING.padX + 'px;">' +
-              '<a href="' + esc(meeting) + '" target="_blank" style="display:inline-block;padding:0 ' + MEETING.padX + 'px;' +
-              'font-family:' + FONT + ';font-size:12px;font-weight:700;line-height:' + MEETING.height + 'px;mso-line-height-rule:exactly;' +
-              'color:' + MEETING.color + ';text-decoration:none;white-space:nowrap;border-radius:' + (MEETING.height / 2) + 'px;">' + MEETING.text + '</a>' +
-            '</td>' +
-          '</tr></table>' +
-        '</td>';
-      socialRow =
-        '<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;"><tr>' + button +
-        socials.map(function (sl, i) {
-          var pad = i === socials.length - 1 ? 0 : SOCIAL.gap;
-          return '<td style="padding:8px ' + pad + 'px 0 0;line-height:0;">' +
-            '<a href="' + esc(sl.url) + '" target="_blank" style="text-decoration:none;">' +
-              '<img src="' + base + sl.icon + '" width="' + SOCIAL.size + '" height="' + SOCIAL.size + '" alt="' + sl.alt + '" ' +
-              'style="display:block;width:' + SOCIAL.size + 'px;height:' + SOCIAL.size + 'px;border:0;outline:none;">' +
-            '</a></td>';
-        }).join('') +
-        '</tr></table>';
-    }
-    var contacts = '<td style="' + text + 'padding:0;vertical-align:top;">' + nameBlock + '<div>' + lines.join('<br>') + '</div>' + socialRow + '</td>';
-    if (isHttpsUrl(d.photo)) {
-      // Вкладена таблиця: фото ліворуч, контакти праворуч. border-radius ігнорує лише класичний Outlook (кути будуть прямі).
-      contacts =
-        '<td style="padding:0;">' +
-          '<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;"><tr>' +
-            '<td width="' + (PHOTO.size + PHOTO.gap) + '" valign="top" style="width:' + (PHOTO.size + PHOTO.gap) + 'px;padding:0;vertical-align:top;line-height:0;">' +
-              '<img src="' + esc(d.photo) + '" width="' + PHOTO.size + '" height="' + PHOTO.size + '" alt="' + esc(name) + '" ' +
-              'style="display:block;width:' + PHOTO.size + 'px;height:' + PHOTO.size + 'px;border:0;outline:none;border-radius:' + PHOTO.radius + 'px;">' +
-            '</td>' +
-            contacts +
-          '</tr></table>' +
-        '</td>';
-    }
-    rows.push('<tr>' + contacts + '</tr>');
+  // Лінія через border-top на комірці: так її однаково малюють Gmail, Apple Mail і Outlook (Word).
+  function dividerRow() {
+    return '<tr><td height="' + DIVIDER.gap + '" style="border-top:1px solid ' + DIVIDER.color + ';height:' + DIVIDER.gap + 'px;' +
+      'line-height:' + DIVIDER.gap + 'px;font-size:1px;mso-line-height-rule:exactly;padding:0;">&nbsp;</td></tr>';
+  }
 
-    var promo = findPromo(d.promo);
-    if (promo && promo.type === 'banner') {
-      // Банер: атрибут width для Outlook + width:100%/max-width для адаптиву на телефонах.
-      // Заокруглення таке саме, як у фото (класичний Outlook його ігнорує — кути будуть прямі).
+  function photoImg(src, size, radius, alt) {
+    return '<img src="' + esc(src) + '" width="' + size + '" height="' + size + '" alt="' + esc(alt) + '" ' +
+      'style="display:block;width:' + size + 'px;height:' + size + 'px;border:0;outline:none;border-radius:' + radius + ';">';
+  }
+
+  // Комірки з іконками соцмереж; padTop — відступ зверху (у Classic рядок іде одразу після тексту).
+  function iconCells(socials, base, padTop) {
+    return socials.map(function (sl, i) {
+      var pad = i === socials.length - 1 ? 0 : SOCIAL.gap;
+      return '<td style="padding:' + padTop + 'px ' + pad + 'px 0 0;line-height:0;vertical-align:middle;">' +
+        '<a href="' + esc(sl.url) + '" target="_blank" style="text-decoration:none;">' +
+          '<img src="' + base + sl.icon + '" width="' + SOCIAL.size + '" height="' + SOCIAL.size + '" alt="' + sl.alt + '" ' +
+          'style="display:block;width:' + SOCIAL.size + 'px;height:' + SOCIAL.size + 'px;border:0;outline:none;">' +
+        '</a></td>';
+    }).join('');
+  }
+
+  // Кнопка «Book a meeting»: комірка з bgcolor (Outlook) + border-radius (решта клієнтів; у класичному Outlook кути прямі).
+  function meetingButton(url, height, fontSize, align) {
+    var r = height / 2;
+    return '<table role="presentation" cellpadding="0" cellspacing="0" border="0"' + (align ? ' align="' + align + '"' : '') + ' style="border-collapse:separate;"><tr>' +
+      '<td bgcolor="' + MEETING.bg + '" style="background:' + MEETING.bg + ';border-radius:' + r + 'px;mso-padding-alt:0 ' + MEETING.padX + 'px;">' +
+        '<a href="' + esc(url) + '" target="_blank" style="display:inline-block;padding:0 ' + MEETING.padX + 'px;' +
+        fontStyle(fontSize, height, MEETING.color, 'font-weight:700;text-decoration:none;white-space:nowrap;border-radius:' + r + 'px;') + '">' + MEETING.text + '</a>' +
+      '</td>' +
+    '</tr></table>';
+  }
+
+  // Промо-блок унизу: банер на всю ширину або текстове посилання з іконкою.
+  function promoRow(promo, base, gapTop) {
+    if (!promo) return '';
+    if (promo.type === 'banner') {
+      // Атрибут width для Outlook + width:100%/max-width для адаптиву на телефонах; кути як у фото (Outlook — прямі).
       var im = promo.image;
-      rows.push(
-        '<tr><td style="padding:18px 0 0 0;line-height:0;font-size:0;">' +
-          '<a href="' + esc(promo.url) + '" target="_blank" style="text-decoration:none;">' +
-            '<img src="' + base + im.src + '" width="' + im.width + '" alt="' + esc(im.alt) + '" ' +
-            'style="display:block;width:100%;max-width:' + im.width + 'px;height:auto;border:0;outline:none;border-radius:' + PHOTO.radius + 'px;' +
-            'font-family:' + FONT + ';font-size:14px;line-height:21px;color:' + INK + ';">' +
-          '</a>' +
-        '</td></tr>'
-      );
-    } else if (promo) {
-      var iconCell = '';
-      if (promo.icon) {
-        var ic = promo.icon;
-        iconCell =
-          '<td style="padding:0 8px 0 0;vertical-align:middle;line-height:0;">' +
-            '<a href="' + esc(promo.url) + '" target="_blank" style="text-decoration:none;">' +
-              '<img src="' + base + ic.src + '" width="' + ic.width + '" height="' + ic.height + '" alt="' + esc(ic.alt) + '" ' +
-              'style="display:block;width:' + ic.width + 'px;height:' + ic.height + 'px;border:0;outline:none;">' +
-            '</a></td>';
-      }
-      rows.push(
-        '<tr><td style="padding:18px 0 0 0;">' +
-          '<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;"><tr>' +
-            iconCell +
-            '<td style="' + text + 'vertical-align:middle;padding:0;">' +
-              '<a href="' + esc(promo.url) + '" target="_blank" style="color:' + INK + ';text-decoration:underline;">' + esc(promo.text) + '</a>' +
-            '</td>' +
-          '</tr></table>' +
-        '</td></tr>'
-      );
+      return '<tr><td style="padding:' + gapTop + 'px 0 0 0;line-height:0;font-size:0;">' +
+        '<a href="' + esc(promo.url) + '" target="_blank" style="text-decoration:none;">' +
+          '<img src="' + base + im.src + '" width="' + im.width + '" alt="' + esc(im.alt) + '" ' +
+          'style="display:block;width:100%;max-width:' + im.width + 'px;height:auto;border:0;outline:none;border-radius:' + PHOTO.radius + 'px;' +
+          fontStyle(14, 21, INK) + '">' +
+        '</a>' +
+      '</td></tr>';
     }
+    var iconCell = '';
+    if (promo.icon) {
+      var ic = promo.icon;
+      iconCell =
+        '<td style="padding:0 8px 0 0;vertical-align:middle;line-height:0;">' +
+          '<a href="' + esc(promo.url) + '" target="_blank" style="text-decoration:none;">' +
+            '<img src="' + base + ic.src + '" width="' + ic.width + '" height="' + ic.height + '" alt="' + esc(ic.alt) + '" ' +
+            'style="display:block;width:' + ic.width + 'px;height:' + ic.height + 'px;border:0;outline:none;">' +
+          '</a></td>';
+    }
+    return '<tr><td style="padding:' + gapTop + 'px 0 0 0;">' + TABLE + '<tr>' + iconCell +
+      '<td style="' + fontStyle(14, 21, INK) + 'vertical-align:middle;padding:0;">' +
+        '<a href="' + esc(promo.url) + '" target="_blank" style="color:' + INK + ';text-decoration:underline;">' + esc(promo.text) + '</a>' +
+      '</td></tr></table></td></tr>';
+  }
 
+  function wrapSignature(rows) {
     return '<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="420" ' +
       'style="border-collapse:collapse;width:100%;max-width:420px;mso-table-lspace:0pt;mso-table-rspace:0pt;">' +
       rows.join('') + '</table>';
   }
 
+  // Спільні дані для обох дизайнів (з прикладом у прев'ю, поки форма порожня).
+  function signatureContext(d) {
+    var pristine = !d.name && !d.title && !d.mobile && !d.email;
+    return {
+      base: assetBase(),
+      name: d.name || 'John Smith',
+      title: d.title || 'Marketing Manager',
+      mobile: d.mobile || (pristine ? '+380 50 123 4567' : ''),
+      email: d.email || 'smith.j@ajax.systems',
+      photo: isHttpsUrl(d.photo) ? d.photo : '',
+      socials: socialLinks(d),
+      meeting: d.meetingStyle === 'icon' ? '' : meetingUrl(d.meeting),
+      promo: findPromo(d.promo)
+    };
+  }
+
+  function buildSignature(d) {
+    var c = signatureContext(d);
+    return d.design === 'modern' ? buildModern(c) : buildClassic(c);
+  }
+
+  // ---------- Classic: фото ліворуч, текстові рядки, іконки під контактами ----------
+  function buildClassic(c) {
+    var text = fontStyle(14, 21, INK);
+    var link = 'color:' + INK + ';text-decoration:none;';
+
+    // Ім'я окремим блоком: Outlook застосовує line-height до всього абзацу, тож різні висоти рядків мають бути в різних блоках.
+    var nameBlock = '<div style="font-size:' + NAME.fontSize + 'px;line-height:' + NAME.lineHeight + 'px;mso-line-height-rule:exactly;font-weight:700;">' + esc(c.name) + '</div>';
+    var lines = [esc(c.title) + ' | ' + COMPANY];
+    if (c.mobile) {
+      lines.push('<b style="font-weight:700;">Mobile:</b> <a href="' + esc(telHref(c.mobile)) + '" style="' + link + '">' + esc(c.mobile) + '</a>');
+    }
+    lines.push('<b style="font-weight:700;">Email:</b> <a href="mailto:' + esc(c.email) + '" style="' + link + '">' + esc(c.email) + '</a>');
+
+    var socialRow = '';
+    if (c.socials.length || c.meeting) {
+      var button = !c.meeting ? '' :
+        '<td style="padding:8px ' + (c.socials.length ? MEETING.gapAfter : 0) + 'px 0 0;vertical-align:top;">' + meetingButton(c.meeting, MEETING.height, 12) + '</td>';
+      socialRow = TABLE + '<tr>' + button + iconCells(c.socials, c.base, 8) + '</tr></table>';
+    }
+    var contacts = '<td style="' + text + 'padding:0;vertical-align:top;">' + nameBlock + '<div>' + lines.join('<br>') + '</div>' + socialRow + '</td>';
+    if (c.photo) {
+      // Вкладена таблиця: фото ліворуч, контакти праворуч. border-radius ігнорує лише класичний Outlook (кути будуть прямі).
+      contacts =
+        '<td style="padding:0;">' + TABLE + '<tr>' +
+          '<td width="' + (PHOTO.size + PHOTO.gap) + '" valign="top" style="width:' + (PHOTO.size + PHOTO.gap) + 'px;padding:0;vertical-align:top;line-height:0;">' +
+            photoImg(c.photo, PHOTO.size, PHOTO.radius + 'px', c.name) +
+          '</td>' + contacts +
+        '</tr></table></td>';
+    }
+    return wrapSignature([dividerRow(), '<tr>' + contacts + '</tr>', promoRow(c.promo, c.base, 18)]);
+  }
+
+  // ---------- Modern: кругле фото + ім'я, контакти колонками з підписами, сіра плашка з іконками й кнопкою ----------
+  function buildModern(c) {
+    var M = MODERN;
+    var rows = [dividerRow()];
+
+    var heading =
+      '<div style="' + fontStyle(NAME.fontSize, NAME.lineHeight, INK, 'font-weight:700;') + '">' + esc(c.name) + '</div>' +
+      '<div style="' + fontStyle(14, 20, M.muted) + '">' + esc(c.title) + '</div>';
+    if (c.photo) {
+      heading = TABLE + '<tr>' +
+        '<td width="' + (M.photo + M.photoGap) + '" style="width:' + (M.photo + M.photoGap) + 'px;padding:0;vertical-align:middle;line-height:0;">' +
+          photoImg(c.photo, M.photo, '50%', c.name) +
+        '</td>' +
+        '<td style="padding:0;vertical-align:middle;">' + heading + '</td>' +
+      '</tr></table>';
+    }
+    rows.push('<tr><td style="padding:0;">' + heading + '</td></tr>');
+
+    // Колонки контактів — «плаваючі» таблиці align="left": на вузькому екрані друга колонка переноситься під першу.
+    var link = 'color:' + INK + ';text-decoration:none;';
+    var cols = [];
+    if (c.mobile) cols.push({ label: 'MOBILE', value: '<a href="' + esc(telHref(c.mobile)) + '" style="' + link + '">' + esc(c.mobile) + '</a>' });
+    cols.push({ label: 'EMAIL', value: '<a href="mailto:' + esc(c.email) + '" style="' + link + '">' + esc(c.email) + '</a>' });
+    rows.push('<tr><td style="padding:' + M.section + 'px 0 0 0;">' + cols.map(function (col, i) {
+      return '<table role="presentation" align="left" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">' +
+        '<tr><td style="padding:0 ' + (i === cols.length - 1 ? 0 : M.colGap) + 'px ' + M.colGapY + 'px 0;">' +
+          '<div style="' + fontStyle(11, 16, M.label, 'letter-spacing:0.06em;') + '">' + col.label + '</div>' +
+          '<div style="' + fontStyle(14, 20, INK, 'white-space:nowrap;') + '">' + col.value + '</div>' +
+        '</td></tr></table>';
+    }).join('') + '</td></tr>');
+
+    if (c.socials.length || c.meeting) {
+      var icons = c.socials.length ? '<td style="padding:0;vertical-align:middle;">' + TABLE + '<tr>' + iconCells(c.socials, c.base, 0) + '</tr></table></td>' : '';
+      var button = c.meeting ? '<td align="' + (icons ? 'right' : 'left') + '" style="padding:0;vertical-align:middle;">' +
+        meetingButton(c.meeting, M.buttonHeight, 13, icons ? 'right' : '') + '</td>' : '';
+      rows.push('<tr><td style="padding:' + (M.section - M.colGapY) + 'px 0 0 0;">' +
+        '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:separate;width:100%;"><tr>' +
+          '<td bgcolor="' + M.barBg + '" style="background:' + M.barBg + ';border-radius:' + M.barRadius + 'px;padding:' + M.barPadY + 'px ' + M.barPadX + 'px;">' +
+            '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;width:100%;"><tr>' + icons + button + '</tr></table>' +
+          '</td>' +
+        '</tr></table></td></tr>');
+    }
+
+    rows.push(promoRow(c.promo, c.base, c.socials.length || c.meeting ? M.section : M.section - M.colGapY));
+    return wrapSignature(rows);
+  }
+
   function buildPlain(d) {
-    var out = [d.name || 'John Smith', (d.title || 'Marketing Manager') + ' | ' + COMPANY];
+    var head = (d.title || 'Marketing Manager') + (d.design === 'modern' ? '' : ' | ' + COMPANY);
+    var out = [d.name || 'John Smith', head];
     if (d.mobile) out.push('Mobile: ' + d.mobile);
     out.push('Email: ' + (d.email || 'smith.j@ajax.systems'));
     if (d.meetingStyle !== 'icon' && meetingUrl(d.meeting)) out.push(MEETING.text + ': ' + meetingUrl(d.meeting));
@@ -473,6 +562,7 @@
     });
     if ($('waSame').checked) p.set('wa', 'mobile');
     if ($('meeting').value.trim() && meetingStyle() === 'icon') p.set('ms', 'icon');
+    if (design() !== DEFAULT_DESIGN) p.set('design', design());
     if ($('promo').value !== DEFAULT_PROMO) p.set('promo', $('promo').value || 'none');
     if (lang !== 'en') p.set('lang', lang);
     var qs = p.toString();
@@ -483,7 +573,7 @@
   // щоб перезавантаження сторінки не затирало подальші правки.
   function applyUrlParams() {
     var p = new URLSearchParams(location.search);
-    var known = fields.concat(['wa', 'ms', 'promo', 'lang']);
+    var known = fields.concat(['design', 'wa', 'ms', 'promo', 'lang']);
     var has = known.some(function (k) { return p.has(k); });
     if (!has) return;
     fields.forEach(function (f) { $(f).value = ''; });
@@ -494,6 +584,7 @@
     });
     $('waSame').checked = p.get('wa') === 'mobile';
     setMeetingStyle(p.get('ms'));
+    setDesign(p.get('design'));
     if (p.has('promo')) {
       var promo = p.get('promo');
       $('promo').value = promo === 'none' ? '' : (findPromo(promo) ? promo : DEFAULT_PROMO);
@@ -516,6 +607,7 @@
         if (typeof s.d.promo === 'string') $('promo').value = findPromo(s.d.promo) ? s.d.promo : '';
         if (typeof s.d.waSame === 'boolean') $('waSame').checked = s.d.waSame;
         if (typeof s.d.meetingStyle === 'string') setMeetingStyle(s.d.meetingStyle);
+        if (typeof s.d.design === 'string') setDesign(s.d.design);
       }
       if (hasLang(s.lang)) lang = s.lang;
     } catch (e) { /* noop */ }

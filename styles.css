@@ -103,6 +103,31 @@ button { font: inherit; color: inherit; }
 .extras__summary:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .extras__body { padding: 4px 14px 2px; }
 .check { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: #333; cursor: pointer; margin-top: 2px; }
+/* Design picker */
+.field__label { font-size: 13px; font-weight: 500; color: #333; }
+.designs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.design {
+  position: relative; display: flex; flex-direction: column; gap: 8px; padding: 10px; cursor: pointer;
+  border: 1px solid var(--line); border-radius: 12px; background: #fafafa; transition: border-color .15s, box-shadow .15s;
+}
+.design:hover { border-color: #c9c9c9; }
+.design input { position: absolute; opacity: 0; pointer-events: none; }
+.design:has(input:checked) { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); background: #fff; }
+.design:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; }
+.design__name { font-size: 13px; font-weight: 500; }
+.thumb { display: flex; flex-direction: column; gap: 5px; height: 64px; padding: 8px; border-radius: 8px; background: #fff; border: 1px solid #eee; }
+.thumb b { display: block; height: 4px; border-radius: 2px; background: #cfcfcf; }
+.thumb .w40 { width: 40%; } .thumb .w60 { width: 60%; } .thumb .w70 { width: 70%; } .thumb .w90 { width: 90%; }
+.thumb .thumb__muted { background: #e3e3e3; }
+.thumb__row { display: flex; align-items: center; gap: 6px; }
+.thumb__ph { flex: 0 0 auto; width: 18px; height: 18px; border-radius: 4px; background: #bdbdbd; }
+.thumb__ph--round { border-radius: 50%; }
+.thumb__lines { flex: 1; display: flex; flex-direction: column; gap: 3px; }
+.thumb__cols { display: flex; gap: 8px; }
+.thumb__cols b { width: 30%; background: #e3e3e3; }
+.thumb .thumb__banner { height: 12px; margin-top: auto; background: #3a3a3a; border-radius: 3px; }
+.thumb .thumb__bar { height: 10px; margin-top: auto; background: #ededed; border-radius: 3px; }
+
 .choice { display: flex; flex-wrap: wrap; gap: 6px 18px; }
 .field .check input { width: 16px; height: 16px; padding: 0; margin: 0; border: 0; box-shadow: none; accent-color: var(--accent); }
 .field input:disabled { color: var(--muted); background: #f0f0f0; cursor: not-allowed; }
