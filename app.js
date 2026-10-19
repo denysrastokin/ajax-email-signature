@@ -375,12 +375,13 @@
     var promo = findPromo(d.promo);
     if (promo && promo.type === 'banner') {
       // Банер: атрибут width для Outlook + width:100%/max-width для адаптиву на телефонах.
+      // Заокруглення таке саме, як у фото (класичний Outlook його ігнорує — кути будуть прямі).
       var im = promo.image;
       rows.push(
         '<tr><td style="padding:18px 0 0 0;line-height:0;font-size:0;">' +
           '<a href="' + esc(promo.url) + '" target="_blank" style="text-decoration:none;">' +
             '<img src="' + base + im.src + '" width="' + im.width + '" alt="' + esc(im.alt) + '" ' +
-            'style="display:block;width:100%;max-width:' + im.width + 'px;height:auto;border:0;outline:none;' +
+            'style="display:block;width:100%;max-width:' + im.width + 'px;height:auto;border:0;outline:none;border-radius:' + PHOTO.radius + 'px;' +
             'font-family:' + FONT + ';font-size:14px;line-height:21px;color:' + INK + ';">' +
           '</a>' +
         '</td></tr>'
