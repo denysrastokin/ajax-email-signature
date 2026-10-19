@@ -86,6 +86,15 @@
               </label>
               <span class="field__warn" id="whatsapp-warning" hidden></span>
             </div>
+            <div class="field">
+              <label for="meeting" data-i18n="fMeeting">Meeting booking link (Calendly, Google Calendar)</label>
+              <input id="meeting" name="meeting" type="url" inputmode="url" placeholder="calendly.com/john-smith" maxlength="300" autocapitalize="off" spellcheck="false">
+              <div class="choice" role="radiogroup" aria-label="Meeting link style">
+                <label class="check"><input type="radio" name="meetingStyle" value="button" checked> <span data-i18n="msButton">“Book a meeting” button</span></label>
+                <label class="check"><input type="radio" name="meetingStyle" value="icon"> <span data-i18n="msIcon">Calendar icon</span></label>
+              </div>
+              <span class="field__warn" id="meeting-warning" hidden></span>
+            </div>
           </div>
         </details>
 

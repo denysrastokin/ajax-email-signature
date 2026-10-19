@@ -36,6 +36,8 @@
   var PHOTO = { size: 90, radius: 16, gap: 10, minSource: 180 };
   // Іконки соцмереж і месенджерів під контактами: круглі, 22px (файли 44×44 для Retina).
   var SOCIAL = { size: 22, gap: 8 };
+  // Кнопка «Book a meeting» у рядку з іконками: та сама висота, що й іконки; без картинок, тож видно і з вимкненими зображеннями.
+  var MEETING = { text: 'Book a meeting', height: 22, padX: 12, gapAfter: 12, bg: '#222222', color: '#FFFFFF' };
 
   var I18N = {
     uk: {
@@ -61,6 +63,11 @@
       linkedinInvalid: 'Потрібне посилання на профіль LinkedIn, напр. linkedin.com/in/john-smith.',
       telegramInvalid: 'Вкажіть нікнейм Telegram (@username, 5–32 символи: латиниця, цифри, _) або посилання t.me/username.',
       whatsappInvalid: 'Вкажіть номер у міжнародному форматі з «+» і кодом країни, напр. +380 50 123 4567.',
+      fMeeting: 'Посилання для запису на зустріч (Calendly, Google Calendar)',
+      msButton: 'Кнопка «Book a meeting»',
+      msIcon: 'Іконка календаря',
+      meetingInvalid: 'Потрібне посилання https:// на сторінку запису, напр. calendly.com/john-smith.',
+      meetingUnknown: 'Не схоже на Calendly чи Google Calendar — перевірте, що посилання відкриває сторінку запису на зустріч.',
       blocks: 'Блоки підпису',
       tBanner: 'Банер Ajax з нагородами',
       previewTitle: "Прев'ю",
@@ -128,6 +135,11 @@
       linkedinInvalid: 'Use a link to a LinkedIn profile, e.g. linkedin.com/in/john-smith.',
       telegramInvalid: 'Enter a Telegram username (@username, 5–32 characters: Latin letters, digits, _) or a t.me/username link.',
       whatsappInvalid: 'Enter the number in international format with “+” and country code, e.g. +380 50 123 4567.',
+      fMeeting: 'Meeting booking link (Calendly, Google Calendar)',
+      msButton: '“Book a meeting” button',
+      msIcon: 'Calendar icon',
+      meetingInvalid: 'Use an https:// link to a booking page, e.g. calendly.com/john-smith.',
+      meetingUnknown: 'This doesn’t look like Calendly or Google Calendar — make sure the link opens a booking page.',
       blocks: 'Signature blocks',
       tBanner: 'Ajax banner with awards',
       previewTitle: 'Preview',
@@ -177,7 +189,7 @@
   var $ = function (id) { return document.getElementById(id); };
   var form = $('form');
   var frame = $('preview');
-  var fields = ['name', 'title', 'mobile', 'email', 'photo', 'linkedin', 'telegram', 'whatsapp'];
+  var fields = ['name', 'title', 'mobile', 'email', 'photo', 'linkedin', 'telegram', 'whatsapp', 'meeting'];
   var lang = 'en';
 
   // ---------- helpers ----------
@@ -216,12 +228,35 @@
     var digits = t.replace(/[^\d]/g, '');
     return t.charAt(0) === '+' && digits.length >= 8 && digits.length <= 15 ? 'https://wa.me/' + digits : null;
   }
+  // Будь-яке https-посилання на сторінку запису; http:// і посилання без схеми доводимо до https://.
+  function meetingUrl(s) {
+    if (!s) return '';
+    var v = s.replace(/^http:\/\//i, 'https://');
+    if (!/^https:\/\//i.test(v)) v = 'https://' + v.replace(/^\/+/, '');
+    try {
+      var u = new URL(v);
+      if (u.protocol !== 'https:' || u.hostname.indexOf('.') === -1 || u.username || u.password) return null;
+      return isHttpsUrl(u.href) ? u.href : null;
+    } catch (e) { return null; }
+  }
+  // Відомі сервіси запису; для решти показуємо м'яке попередження, але посилання все одно додаємо.
+  function isKnownMeeting(url) {
+    try {
+      var u = new URL(url), h = u.hostname.toLowerCase();
+      return /(^|\.)calendly\.com$/.test(h) || h === 'calendar.app.google' ||
+        (h === 'calendar.google.com' && /^\/calendar\/(u\/\d+\/)?appointments/.test(u.pathname)) ||
+        (/^outlook\.office(365)?\.com$/.test(h) && /^\/(bookwithme|book|owa\/calendar)/i.test(u.pathname)) ||
+        h === 'meetings.hubspot.com' || h === 'cal.com';
+    } catch (e) { return false; }
+  }
   function socialLinks(d) {
     var wa = d.waSame ? d.mobile : d.whatsapp;
     return [
       { url: linkedinUrl(d.linkedin), icon: 'linkedin.png', alt: 'LinkedIn' },
       { url: telegramUrl(d.telegram), icon: 'telegram.png', alt: 'Telegram' },
-      { url: whatsappUrl(wa), icon: 'whatsapp.png', alt: 'WhatsApp' }
+      { url: whatsappUrl(wa), icon: 'whatsapp.png', alt: 'WhatsApp' },
+      // Іконка календаря — лише коли обрано вигляд «іконка»; інакше це кнопка на початку рядка.
+      { url: d.meetingStyle === 'icon' ? meetingUrl(d.meeting) : '', icon: 'calendar.png', alt: 'Book a meeting' }
     ].filter(function (x) { return x.url; });
   }
   // Локальна частина адреси (до «@»): без пробілів, крапка не на початку/в кінці й не двічі поспіль.
@@ -248,7 +283,16 @@
     d.promo = $('promo').value;
     d.showBanner = $('showBanner').checked;
     d.waSame = $('waSame').checked;
+    d.meetingStyle = meetingStyle();
     return d;
+  }
+
+  function meetingStyle() {
+    var r = document.querySelector('input[name="meetingStyle"]:checked');
+    return r && r.value === 'icon' ? 'icon' : 'button';
+  }
+  function setMeetingStyle(v) {
+    document.querySelectorAll('input[name="meetingStyle"]').forEach(function (r) { r.checked = r.value === (v === 'icon' ? 'icon' : 'button'); });
   }
 
   function findPromo(id) {
@@ -291,10 +335,22 @@
     var rows = ['<tr><td height="' + DIVIDER.gap + '" style="border-top:1px solid ' + DIVIDER.color + ';height:' + DIVIDER.gap + 'px;' +
       'line-height:' + DIVIDER.gap + 'px;font-size:1px;mso-line-height-rule:exactly;padding:0;">&nbsp;</td></tr>'];
     var socials = socialLinks(d);
+    var meeting = d.meetingStyle === 'icon' ? '' : meetingUrl(d.meeting);
     var socialRow = '';
-    if (socials.length) {
+    if (socials.length || meeting) {
+      // Кнопка: комірка з bgcolor (Outlook) + border-radius (решта клієнтів; у класичному Outlook кути прямі).
+      var button = !meeting ? '' :
+        '<td style="padding:8px ' + (socials.length ? MEETING.gapAfter : 0) + 'px 0 0;vertical-align:top;">' +
+          '<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:separate;"><tr>' +
+            '<td bgcolor="' + MEETING.bg + '" style="background:' + MEETING.bg + ';border-radius:' + (MEETING.height / 2) + 'px;mso-padding-alt:0 ' + MEETING.padX + 'px;">' +
+              '<a href="' + esc(meeting) + '" target="_blank" style="display:inline-block;padding:0 ' + MEETING.padX + 'px;' +
+              'font-family:' + FONT + ';font-size:12px;font-weight:700;line-height:' + MEETING.height + 'px;mso-line-height-rule:exactly;' +
+              'color:' + MEETING.color + ';text-decoration:none;white-space:nowrap;border-radius:' + (MEETING.height / 2) + 'px;">' + MEETING.text + '</a>' +
+            '</td>' +
+          '</tr></table>' +
+        '</td>';
       socialRow =
-        '<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;"><tr>' +
+        '<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;"><tr>' + button +
         socials.map(function (sl, i) {
           var pad = i === socials.length - 1 ? 0 : SOCIAL.gap;
           return '<td style="padding:8px ' + pad + 'px 0 0;line-height:0;">' +
@@ -367,6 +423,7 @@
     out.push('Email: ' + (d.email || 'smith.j@ajax.systems'));
     var promo = findPromo(d.promo);
     if (promo) out.push('', promo.text + ': ' + promo.url);
+    if (d.meetingStyle !== 'icon' && meetingUrl(d.meeting)) out.push(MEETING.text + ': ' + meetingUrl(d.meeting));
     socialLinks(d).forEach(function (sl) { out.push(sl.alt + ': ' + sl.url); });
     if (d.showBanner) out.push('', SITE_URL);
     return out.join('\n');
@@ -419,6 +476,7 @@
       if (v) p.set(f, v);
     });
     if ($('waSame').checked) p.set('wa', 'mobile');
+    if ($('meeting').value.trim() && meetingStyle() === 'icon') p.set('ms', 'icon');
     if ($('promo').value !== DEFAULT_PROMO) p.set('promo', $('promo').value || 'none');
     if (!$('showBanner').checked) p.set('banner', '0');
     if (lang !== 'en') p.set('lang', lang);
@@ -430,7 +488,7 @@
   // щоб перезавантаження сторінки не затирало подальші правки.
   function applyUrlParams() {
     var p = new URLSearchParams(location.search);
-    var known = fields.concat(['wa', 'promo', 'banner', 'lang']);
+    var known = fields.concat(['wa', 'ms', 'promo', 'banner', 'lang']);
     var has = known.some(function (k) { return p.has(k); });
     if (!has) return;
     fields.forEach(function (f) { $(f).value = ''; });
@@ -440,6 +498,7 @@
       $(f).value = f === 'email' ? emailLocal(v) : v;
     });
     $('waSame').checked = p.get('wa') === 'mobile';
+    setMeetingStyle(p.get('ms'));
     if (p.has('promo')) {
       var promo = p.get('promo');
       $('promo').value = promo === 'none' ? '' : (findPromo(promo) ? promo : DEFAULT_PROMO);
@@ -463,6 +522,7 @@
         if (typeof s.d.promo === 'string') $('promo').value = findPromo(s.d.promo) ? s.d.promo : '';
         if (typeof s.d.showBanner === 'boolean') $('showBanner').checked = s.d.showBanner;
         if (typeof s.d.waSame === 'boolean') $('waSame').checked = s.d.waSame;
+        if (typeof s.d.meetingStyle === 'string') setMeetingStyle(s.d.meetingStyle);
       }
       if (hasLang(s.lang)) lang = s.lang;
     } catch (e) { /* noop */ }
@@ -474,7 +534,7 @@
     document.querySelectorAll('[data-i18n]').forEach(function (el) { el.textContent = t(el.getAttribute('data-i18n')); });
     document.querySelectorAll('[data-i18n-html]').forEach(function (el) { el.innerHTML = t(el.getAttribute('data-i18n-html')); });
     renderPromoOptions();
-    ['photo-warning', 'linkedin-warning', 'telegram-warning', 'whatsapp-warning'].forEach(function (id) {
+    ['photo-warning', 'linkedin-warning', 'telegram-warning', 'whatsapp-warning', 'meeting-warning'].forEach(function (id) {
       var w = $(id);
       if (w.dataset.key) w.textContent = t(w.dataset.key);
     });
@@ -639,15 +699,17 @@
   form.addEventListener('change', render);
   form.addEventListener('submit', function (e) { e.preventDefault(); });
   // ---------- social fields ----------
-  var SOCIAL_FIELDS = { linkedin: linkedinUrl, telegram: telegramUrl, whatsapp: whatsappUrl };
+  var SOCIAL_FIELDS = { linkedin: linkedinUrl, telegram: telegramUrl, whatsapp: whatsappUrl, meeting: meetingUrl };
   // Під час набору лише ховаємо попередження, коли значення стало правильним; показуємо його на blur.
   function checkSocial(id, strict) {
     var input = $(id);
     var warn = $(id + '-warning');
-    var bad = !input.disabled && SOCIAL_FIELDS[id](input.value.trim()) === null;
-    if (!bad) { warn.hidden = true; warn.dataset.key = ''; return; }
-    if (!strict && warn.hidden) return;
-    warn.dataset.key = id + 'Invalid';
+    var url = input.disabled ? '' : SOCIAL_FIELDS[id](input.value.trim());
+    var key = url === null ? id + 'Invalid' : (id === 'meeting' && url && !isKnownMeeting(url) ? 'meetingUnknown' : '');
+    if (!key) { warn.hidden = true; warn.dataset.key = ''; return; }
+    // Під час набору не показуємо нових попереджень; лише прибираємо те, що вже не актуальне.
+    if (!strict) { if (warn.dataset.key !== key) { warn.hidden = true; warn.dataset.key = ''; } return; }
+    warn.dataset.key = key;
     warn.textContent = t(warn.dataset.key);
     warn.hidden = false;
   }
@@ -707,7 +769,7 @@
   $('hostingNotice').hidden = assetsArePublic();
   syncWaSame();
   // Блок соцмереж згорнутий, але відкривається сам, якщо щось уже заповнено.
-  if ($('linkedin').value || $('telegram').value || $('whatsapp').value || $('waSame').checked) {
+  if ($('linkedin').value || $('telegram').value || $('whatsapp').value || $('waSame').checked || $('meeting').value) {
     $('socialBlock').open = true;
   }
   render();

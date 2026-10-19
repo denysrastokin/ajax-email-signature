@@ -103,6 +103,7 @@ button { font: inherit; color: inherit; }
 .extras__summary:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .extras__body { padding: 4px 14px 2px; }
 .check { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: #333; cursor: pointer; margin-top: 2px; }
+.choice { display: flex; flex-wrap: wrap; gap: 6px 18px; }
 .field .check input { width: 16px; height: 16px; padding: 0; margin: 0; border: 0; box-shadow: none; accent-color: var(--accent); }
 .field input:disabled { color: var(--muted); background: #f0f0f0; cursor: not-allowed; }
 
