@@ -11,15 +11,24 @@
   var EMAIL_DOMAIN = 'ajax.systems';
   var SITE_URL = 'https://ajax.systems/';
 
-  // Варіанти посилання під контактами (випадаючий список «Featured link»).
-  // Щоб додати новий: id, назва в списку (en/uk), текст посилання в підписі, URL та іконка 20×14 @2x (40×28) у assets/.
+  // Варіанти промо-блоку внизу підпису (випадаючий список «Promo block»); у підписі показується один вибраний.
+  // type 'link'   — текстове посилання з іконкою: text, url, icon (файл у assets/ подвійного розміру).
+  // type 'banner' — картинка на всю ширину підпису: url, image (файл у assets/ шириною 2× від width).
   var PROMO_LINKS = [
     {
       id: 'youtube-pro',
+      type: 'link',
       label: { en: 'Ajax PRO YouTube channel', uk: 'YouTube-канал Ajax PRO' },
       text: 'Subscribe to the Ajax PRO YouTube channel',
       url: 'https://www.youtube.com/@AjaxSystemsPRO?sub_confirmation=1',
       icon: { src: 'youtube.png', width: 20, height: 14, alt: 'YouTube' }
+    },
+    {
+      id: 'ajax-banner',
+      type: 'banner',
+      label: { en: 'Ajax banner with awards', uk: 'Банер Ajax з нагородами' },
+      url: SITE_URL,
+      image: { src: 'ajax-banner.jpg', width: 420, alt: 'Ajax Systems — award-winning security systems' }
     }
   ];
   var DEFAULT_PROMO = 'youtube-pro';
@@ -46,8 +55,8 @@
       formLead: 'Заповніть поля латиницею — підпис оновлюється одразу.',
       fName: "Ім'я та прізвище",
       fTitle: 'Посада',
-      fPromo: 'Додаткове посилання',
-      promoNone: '— Без посилання —',
+      fPromo: 'Промо-блок',
+      promoNone: '— Без промо —',
       fMobile: 'Мобільний',
       fEmail: 'Email',
       emailError: 'Лише частина до «@»: латинські літери, цифри, крапка, дефіс або підкреслення.',
@@ -68,8 +77,6 @@
       msIcon: 'Іконка календаря',
       meetingInvalid: 'Потрібне посилання https:// на сторінку запису, напр. calendly.com/john-smith.',
       meetingUnknown: 'Не схоже на Calendly чи Google Calendar — перевірте, що посилання відкриває сторінку запису на зустріч.',
-      blocks: 'Блоки підпису',
-      tBanner: 'Банер Ajax з нагородами',
       previewTitle: "Прев'ю",
       desktop: "Комп'ютер",
       mobile: 'Телефон',
@@ -118,8 +125,8 @@
       formLead: 'Fill in the fields in Latin characters — the signature updates instantly.',
       fName: 'Full name',
       fTitle: 'Job title',
-      fPromo: 'Featured link',
-      promoNone: '— No link —',
+      fPromo: 'Promo block',
+      promoNone: '— No promo —',
       fMobile: 'Mobile',
       fEmail: 'Email',
       emailError: 'Only the part before “@”: Latin letters, digits, dot, hyphen or underscore.',
@@ -140,8 +147,6 @@
       msIcon: 'Calendar icon',
       meetingInvalid: 'Use an https:// link to a booking page, e.g. calendly.com/john-smith.',
       meetingUnknown: 'This doesn’t look like Calendly or Google Calendar — make sure the link opens a booking page.',
-      blocks: 'Signature blocks',
-      tBanner: 'Ajax banner with awards',
       previewTitle: 'Preview',
       desktop: 'Desktop',
       mobile: 'Mobile',
@@ -281,7 +286,6 @@
     fields.forEach(function (f) { d[f] = $(f).value.trim(); });
     d.email = d.email ? d.email + '@' + EMAIL_DOMAIN : '';
     d.promo = $('promo').value;
-    d.showBanner = $('showBanner').checked;
     d.waSame = $('waSame').checked;
     d.meetingStyle = meetingStyle();
     return d;
@@ -378,7 +382,19 @@
     rows.push('<tr>' + contacts + '</tr>');
 
     var promo = findPromo(d.promo);
-    if (promo) {
+    if (promo && promo.type === 'banner') {
+      // Банер: атрибут width для Outlook + width:100%/max-width для адаптиву на телефонах.
+      var im = promo.image;
+      rows.push(
+        '<tr><td style="padding:18px 0 0 0;line-height:0;font-size:0;">' +
+          '<a href="' + esc(promo.url) + '" target="_blank" style="text-decoration:none;">' +
+            '<img src="' + base + im.src + '" width="' + im.width + '" alt="' + esc(im.alt) + '" ' +
+            'style="display:block;width:100%;max-width:' + im.width + 'px;height:auto;border:0;outline:none;' +
+            'font-family:' + FONT + ';font-size:14px;line-height:21px;color:' + INK + ';">' +
+          '</a>' +
+        '</td></tr>'
+      );
+    } else if (promo) {
       var iconCell = '';
       if (promo.icon) {
         var ic = promo.icon;
@@ -401,17 +417,6 @@
       );
     }
 
-    if (d.showBanner) {
-      rows.push(
-        '<tr><td style="padding:18px 0 0 0;line-height:0;font-size:0;">' +
-          '<a href="' + SITE_URL + '" target="_blank" style="text-decoration:none;">' +
-            '<img src="' + base + 'ajax-banner.jpg" width="420" alt="Ajax Systems — award-winning security systems" ' +
-            'style="display:block;width:100%;max-width:420px;height:auto;border:0;outline:none;' + 'font-family:' + FONT + ';font-size:14px;line-height:21px;color:' + INK + ';">' +
-          '</a>' +
-        '</td></tr>'
-      );
-    }
-
     return '<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="420" ' +
       'style="border-collapse:collapse;width:100%;max-width:420px;mso-table-lspace:0pt;mso-table-rspace:0pt;">' +
       rows.join('') + '</table>';
@@ -421,11 +426,10 @@
     var out = [d.name || 'John Smith', (d.title || 'Marketing Manager') + ' | ' + COMPANY];
     if (d.mobile) out.push('Mobile: ' + d.mobile);
     out.push('Email: ' + (d.email || 'smith.j@ajax.systems'));
-    var promo = findPromo(d.promo);
-    if (promo) out.push('', promo.text + ': ' + promo.url);
     if (d.meetingStyle !== 'icon' && meetingUrl(d.meeting)) out.push(MEETING.text + ': ' + meetingUrl(d.meeting));
     socialLinks(d).forEach(function (sl) { out.push(sl.alt + ': ' + sl.url); });
-    if (d.showBanner) out.push('', SITE_URL);
+    var promo = findPromo(d.promo);
+    if (promo) out.push('', promo.type === 'banner' ? promo.url : promo.text + ': ' + promo.url);
     return out.join('\n');
   }
 
@@ -478,7 +482,6 @@
     if ($('waSame').checked) p.set('wa', 'mobile');
     if ($('meeting').value.trim() && meetingStyle() === 'icon') p.set('ms', 'icon');
     if ($('promo').value !== DEFAULT_PROMO) p.set('promo', $('promo').value || 'none');
-    if (!$('showBanner').checked) p.set('banner', '0');
     if (lang !== 'en') p.set('lang', lang);
     var qs = p.toString();
     return location.origin + location.pathname + (qs ? '?' + qs : '');
@@ -488,7 +491,7 @@
   // щоб перезавантаження сторінки не затирало подальші правки.
   function applyUrlParams() {
     var p = new URLSearchParams(location.search);
-    var known = fields.concat(['wa', 'ms', 'promo', 'banner', 'lang']);
+    var known = fields.concat(['wa', 'ms', 'promo', 'lang']);
     var has = known.some(function (k) { return p.has(k); });
     if (!has) return;
     fields.forEach(function (f) { $(f).value = ''; });
@@ -505,7 +508,6 @@
     } else {
       $('promo').value = DEFAULT_PROMO;
     }
-    $('showBanner').checked = p.get('banner') !== '0';
     if (p.has('lang') && hasLang(p.get('lang'))) lang = p.get('lang');
     $('prefillNotice').hidden = false;
     try { history.replaceState(null, '', location.pathname + location.hash); } catch (e) { /* noop */ }
@@ -520,7 +522,6 @@
           if (typeof s.d[f] === 'string') $(f).value = f === 'email' ? emailLocal(s.d[f]) : s.d[f];
         });
         if (typeof s.d.promo === 'string') $('promo').value = findPromo(s.d.promo) ? s.d.promo : '';
-        if (typeof s.d.showBanner === 'boolean') $('showBanner').checked = s.d.showBanner;
         if (typeof s.d.waSame === 'boolean') $('waSame').checked = s.d.waSame;
         if (typeof s.d.meetingStyle === 'string') setMeetingStyle(s.d.meetingStyle);
       }
