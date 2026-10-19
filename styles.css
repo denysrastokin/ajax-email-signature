@@ -78,6 +78,25 @@ button { font: inherit; color: inherit; }
 .field__hint { color: var(--muted); font-size: 12px; }
 .field__warn { color: #9a6700; font-size: 12px; }
 
+/* Optional block: social networks & messengers */
+.extras { border: 1px solid var(--line); border-radius: 12px; margin: 4px 0 14px; background: #fcfcfc; }
+.extras__summary {
+  list-style: none; cursor: pointer; padding: 12px 14px; font-size: 14px; font-weight: 500;
+  display: flex; align-items: center; gap: 10px; border-radius: 12px;
+}
+.extras__summary::-webkit-details-marker { display: none; }
+.extras__summary::before {
+  content: "+"; flex: 0 0 auto; width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: #fff;
+  display: inline-flex; align-items: center; justify-content: center; font-size: 16px; line-height: 1;
+}
+.extras[open] .extras__summary::before { content: "−"; }
+.extras__summary:hover { background: #f5f5f5; }
+.extras__summary:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.extras__body { padding: 4px 14px 2px; }
+.check { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: #333; cursor: pointer; margin-top: 2px; }
+.field .check input { width: 16px; height: 16px; padding: 0; margin: 0; border: 0; box-shadow: none; accent-color: var(--accent); }
+.field input:disabled { color: var(--muted); background: #f0f0f0; cursor: not-allowed; }
+
 .toggles { border: 0; padding: 0; margin: 8px 0 0; }
 .toggles legend { font-size: 13px; font-weight: 500; color: #333; margin-bottom: 10px; padding: 0; }
 .toggle { display: flex; align-items: center; gap: 12px; padding: 8px 0; cursor: pointer; font-size: 14px; }

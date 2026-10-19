@@ -54,6 +54,31 @@
           <span class="field__warn" id="photo-warning" hidden></span>
         </div>
 
+        <details class="extras" id="socialBlock">
+          <summary class="extras__summary"><span data-i18n="socialTitle">Add social networks &amp; messengers</span></summary>
+          <div class="extras__body">
+            <div class="field">
+              <label for="linkedin">LinkedIn</label>
+              <input id="linkedin" name="linkedin" type="url" inputmode="url" placeholder="linkedin.com/in/john-smith" maxlength="200">
+              <span class="field__warn" id="linkedin-warning" hidden></span>
+            </div>
+            <div class="field">
+              <label for="telegram">Telegram</label>
+              <input id="telegram" name="telegram" type="text" placeholder="@johnsmith" maxlength="100" autocapitalize="off" spellcheck="false">
+              <span class="field__warn" id="telegram-warning" hidden></span>
+            </div>
+            <div class="field">
+              <label for="whatsapp">WhatsApp</label>
+              <input id="whatsapp" name="whatsapp" type="tel" placeholder="+380 50 123 4567" maxlength="30">
+              <label class="check">
+                <input type="checkbox" id="waSame">
+                <span data-i18n="waSame">Same as mobile</span>
+              </label>
+              <span class="field__warn" id="whatsapp-warning" hidden></span>
+            </div>
+          </div>
+        </details>
+
         <fieldset class="toggles">
           <legend data-i18n="blocks">Signature blocks</legend>
           <div class="field">

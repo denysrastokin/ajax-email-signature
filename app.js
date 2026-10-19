@@ -30,6 +30,8 @@
   var NAME = { fontSize: 17, lineHeight: 25 };
   // Фото ліворуч від контактів: висота = рядок імені (25px) + 3 рядки тексту по 21px = 88px.
   var PHOTO = { size: 88, radius: 16, gap: 10, minSource: 176 };
+  // Іконки соцмереж і месенджерів під контактами: круглі, 20px (файли 40×40 для Retina).
+  var SOCIAL = { size: 20, gap: 8 };
 
   var I18N = {
     uk: {
@@ -50,6 +52,11 @@
       photoNotSquare: 'Фото не квадратне — у підписі воно буде розтягнуте. Обріжте його до квадрата.',
       photoSmall: 'Фото менше 176×176 px — на екранах Retina воно може бути нечітким.',
       photoDrive: 'Це посилання на сторінку перегляду (Google Drive / OneDrive / SharePoint), а не на саму картинку. Використайте пряме посилання на файл зображення.',
+      socialTitle: 'Додати соцмережі та месенджери',
+      waSame: 'Такий самий, як мобільний',
+      linkedinInvalid: 'Потрібне посилання на профіль LinkedIn, напр. linkedin.com/in/john-smith.',
+      telegramInvalid: 'Вкажіть нікнейм Telegram (@username, 5–32 символи: латиниця, цифри, _) або посилання t.me/username.',
+      whatsappInvalid: 'Вкажіть номер у міжнародному форматі з «+» і кодом країни, напр. +380 50 123 4567.',
       blocks: 'Блоки підпису',
       tBanner: 'Банер Ajax з нагородами',
       previewTitle: "Прев'ю",
@@ -108,6 +115,11 @@
       photoNotSquare: 'The photo is not square — it will be stretched in the signature. Crop it to a square.',
       photoSmall: 'The photo is smaller than 176×176 px — it may look blurry on Retina screens.',
       photoDrive: 'This is a viewer page link (Google Drive / OneDrive / SharePoint), not the image itself. Use a direct link to the image file.',
+      socialTitle: 'Add social networks & messengers',
+      waSame: 'Same as mobile',
+      linkedinInvalid: 'Use a link to a LinkedIn profile, e.g. linkedin.com/in/john-smith.',
+      telegramInvalid: 'Enter a Telegram username (@username, 5–32 characters: Latin letters, digits, _) or a t.me/username link.',
+      whatsappInvalid: 'Enter the number in international format with “+” and country code, e.g. +380 50 123 4567.',
       blocks: 'Signature blocks',
       tBanner: 'Ajax banner with awards',
       previewTitle: 'Preview',
@@ -153,7 +165,7 @@
   var $ = function (id) { return document.getElementById(id); };
   var form = $('form');
   var frame = $('preview');
-  var fields = ['name', 'title', 'mobile', 'email', 'photo'];
+  var fields = ['name', 'title', 'mobile', 'email', 'photo', 'linkedin', 'telegram', 'whatsapp'];
   var lang = 'en';
 
   // ---------- helpers ----------
@@ -170,6 +182,35 @@
   }
   function isHttpsUrl(s) { return /^https:\/\/[^\s"'<>]+$/i.test(s || ''); }
   function isViewerLink(s) { return /(drive\.google\.com|docs\.google\.com|1drv\.ms|onedrive\.live\.com|sharepoint\.com)/i.test(s); }
+  // Соцмережі: повертають готовий URL, '' для порожнього поля або null, якщо значення не розпізнано.
+  function linkedinUrl(s) {
+    if (!s) return '';
+    var v = /^https?:\/\//i.test(s) ? s : 'https://' + s.replace(/^\/+/, '');
+    try {
+      var u = new URL(v);
+      if (!/(^|\.)linkedin\.com$/i.test(u.hostname) || u.pathname.length < 2) return null;
+      return 'https://www.linkedin.com' + u.pathname.replace(/\/+$/, '');
+    } catch (e) { return null; }
+  }
+  function telegramUrl(s) {
+    if (!s) return '';
+    var u = s.replace(/^(https?:\/\/)?(www\.)?(t\.me|telegram\.me)\//i, '').replace(/^@/, '').replace(/\/+$/, '');
+    return /^[A-Za-z][A-Za-z0-9_]{4,31}$/.test(u) ? 'https://t.me/' + u : null;
+  }
+  function whatsappUrl(s) {
+    if (!s) return '';
+    var t = s.trim().replace(/\(\s*0\s*\)/g, '');
+    var digits = t.replace(/[^\d]/g, '');
+    return t.charAt(0) === '+' && digits.length >= 8 && digits.length <= 15 ? 'https://wa.me/' + digits : null;
+  }
+  function socialLinks(d) {
+    var wa = d.waSame ? d.mobile : d.whatsapp;
+    return [
+      { url: linkedinUrl(d.linkedin), icon: 'linkedin.png', alt: 'LinkedIn' },
+      { url: telegramUrl(d.telegram), icon: 'telegram.png', alt: 'Telegram' },
+      { url: whatsappUrl(wa), icon: 'whatsapp.png', alt: 'WhatsApp' }
+    ].filter(function (x) { return x.url; });
+  }
   function isEmail(s) { return /^[^\s@<>"]+@[^\s@<>"]+\.[^\s@<>"]{2,}$/.test(s); }
   function t(key) { return I18N[lang][key] || I18N.en[key] || ''; }
 
@@ -188,6 +229,7 @@
     fields.forEach(function (f) { d[f] = $(f).value.trim(); });
     d.promo = $('promo').value;
     d.showBanner = $('showBanner').checked;
+    d.waSame = $('waSame').checked;
     return d;
   }
 
@@ -228,7 +270,22 @@
     lines.push('<b style="font-weight:700;">Email:</b> <a href="mailto:' + esc(email) + '" style="' + link + '">' + esc(email) + '</a>');
 
     var rows = [];
-    var contacts = '<td style="' + text + 'padding:0;vertical-align:top;">' + nameBlock + '<div>' + lines.join('<br>') + '</div></td>';
+    var socials = socialLinks(d);
+    var socialRow = '';
+    if (socials.length) {
+      socialRow =
+        '<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;"><tr>' +
+        socials.map(function (sl, i) {
+          var pad = i === socials.length - 1 ? 0 : SOCIAL.gap;
+          return '<td style="padding:8px ' + pad + 'px 0 0;line-height:0;">' +
+            '<a href="' + esc(sl.url) + '" target="_blank" style="text-decoration:none;">' +
+              '<img src="' + base + sl.icon + '" width="' + SOCIAL.size + '" height="' + SOCIAL.size + '" alt="' + sl.alt + '" ' +
+              'style="display:block;width:' + SOCIAL.size + 'px;height:' + SOCIAL.size + 'px;border:0;outline:none;">' +
+            '</a></td>';
+        }).join('') +
+        '</tr></table>';
+    }
+    var contacts = '<td style="' + text + 'padding:0;vertical-align:top;">' + nameBlock + '<div>' + lines.join('<br>') + '</div>' + socialRow + '</td>';
     if (isHttpsUrl(d.photo)) {
       // Вкладена таблиця: фото ліворуч, контакти праворуч. border-radius ігнорує лише класичний Outlook (кути будуть прямі).
       contacts =
@@ -290,6 +347,7 @@
     out.push('Email: ' + (d.email || 'smith.j@ajax.systems'));
     var promo = findPromo(d.promo);
     if (promo) out.push('', promo.text + ': ' + promo.url);
+    socialLinks(d).forEach(function (sl) { out.push(sl.alt + ': ' + sl.url); });
     if (d.showBanner) out.push('', SITE_URL);
     return out.join('\n');
   }
@@ -339,6 +397,7 @@
         fields.forEach(function (f) { if (typeof s.d[f] === 'string') $(f).value = s.d[f]; });
         if (typeof s.d.promo === 'string') $('promo').value = findPromo(s.d.promo) ? s.d.promo : '';
         if (typeof s.d.showBanner === 'boolean') $('showBanner').checked = s.d.showBanner;
+        if (typeof s.d.waSame === 'boolean') $('waSame').checked = s.d.waSame;
       }
       if (s.lang && I18N[s.lang]) lang = s.lang;
     } catch (e) { /* noop */ }
@@ -350,8 +409,10 @@
     document.querySelectorAll('[data-i18n]').forEach(function (el) { el.textContent = t(el.getAttribute('data-i18n')); });
     document.querySelectorAll('[data-i18n-html]').forEach(function (el) { el.innerHTML = t(el.getAttribute('data-i18n-html')); });
     renderPromoOptions();
-    var pw = $('photo-warning');
-    if (pw && pw.dataset.key) pw.textContent = t(pw.dataset.key);
+    ['photo-warning', 'linkedin-warning', 'telegram-warning', 'whatsapp-warning'].forEach(function (id) {
+      var w = $(id);
+      if (w.dataset.key) w.textContent = t(w.dataset.key);
+    });
     document.querySelectorAll('.lang__btn').forEach(function (b) { b.classList.toggle('is-active', b.dataset.lang === lang); });
     setStatus('');
   }
@@ -505,6 +566,33 @@
   });
   form.addEventListener('change', render);
   form.addEventListener('submit', function (e) { e.preventDefault(); });
+  // ---------- social fields ----------
+  var SOCIAL_FIELDS = { linkedin: linkedinUrl, telegram: telegramUrl, whatsapp: whatsappUrl };
+  // Під час набору лише ховаємо попередження, коли значення стало правильним; показуємо його на blur.
+  function checkSocial(id, strict) {
+    var input = $(id);
+    var warn = $(id + '-warning');
+    var bad = !input.disabled && SOCIAL_FIELDS[id](input.value.trim()) === null;
+    if (!bad) { warn.hidden = true; warn.dataset.key = ''; return; }
+    if (!strict && warn.hidden) return;
+    warn.dataset.key = id + 'Invalid';
+    warn.textContent = t(warn.dataset.key);
+    warn.hidden = false;
+  }
+  function syncWaSame() {
+    var same = $('waSame').checked;
+    var wa = $('whatsapp');
+    wa.disabled = same;
+    if (same) wa.value = $('mobile').value;
+    checkSocial('whatsapp', true);
+  }
+  Object.keys(SOCIAL_FIELDS).forEach(function (id) {
+    $(id).addEventListener('input', function () { checkSocial(id, false); });
+    $(id).addEventListener('blur', function () { checkSocial(id, true); });
+  });
+  $('waSame').addEventListener('change', syncWaSame);
+  $('mobile').addEventListener('input', function () { if ($('waSame').checked) syncWaSame(); });
+
   $('email').addEventListener('blur', function () {
     var v = this.value.trim();
     this.classList.toggle('is-invalid', !!v && !isEmail(v));
@@ -541,6 +629,11 @@
   load();
   applyLang();
   $('hostingNotice').hidden = assetsArePublic();
+  syncWaSame();
+  // Блок соцмереж згорнутий, але відкривається сам, якщо щось уже заповнено.
+  if ($('linkedin').value || $('telegram').value || $('whatsapp').value || $('waSame').checked) {
+    $('socialBlock').open = true;
+  }
   render();
   checkPhoto();
 })();
