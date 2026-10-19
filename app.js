@@ -74,6 +74,8 @@
       copied: 'Скопійовано!',
       copiedHint: 'Підпис у буфері обміну — вставте його в налаштуваннях пошти за інструкцією нижче.',
       copiedHtmlHint: 'HTML-код скопійовано.',
+      copyLink: 'Скопіювати посилання на підпис',
+      copiedLinkHint: 'Посилання скопійовано. Хто його відкриє, побачить форму, заповнену цими даними.',
       copyFail: 'Не вдалося скопіювати автоматично. Виділіть підпис у прев\'ю мишею та натисніть Ctrl+C.',
       required: "Заповніть обов'язкові поля: ім'я, посаду та коректний email.",
       tooLong: 'Підпис довший за ліміт Gmail (10 000 символів).',
@@ -137,6 +139,8 @@
       copied: 'Copied!',
       copiedHint: 'The signature is on your clipboard — paste it in your mail settings as described below.',
       copiedHtmlHint: 'HTML code copied.',
+      copyLink: 'Copy signature link',
+      copiedLinkHint: 'Link copied. Anyone who opens it will see the form prefilled with these details.',
       copyFail: 'Automatic copy failed. Select the signature in the preview with your mouse and press Ctrl+C.',
       required: 'Please fill in the required fields: name, job title and a valid email.',
       tooLong: 'The signature exceeds the Gmail limit (10,000 characters).',
@@ -399,6 +403,48 @@
   function save(d) {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ d: d, lang: lang })); } catch (e) { /* noop */ }
   }
+  // ---------- shareable link ----------
+  // Посилання на сторінку з усіма полями в параметрах URL. Порожні поля й значення за замовчуванням не додаються.
+  function buildShareUrl() {
+    var p = new URLSearchParams();
+    fields.forEach(function (f) {
+      var v = $(f).value.trim();
+      if (f === 'whatsapp' && $('waSame').checked) return;
+      if (v) p.set(f, v);
+    });
+    if ($('waSame').checked) p.set('wa', 'mobile');
+    if ($('promo').value !== DEFAULT_PROMO) p.set('promo', $('promo').value || 'none');
+    if (!$('showBanner').checked) p.set('banner', '0');
+    if (lang !== 'en') p.set('lang', lang);
+    var qs = p.toString();
+    return location.origin + location.pathname + (qs ? '?' + qs : '');
+  }
+
+  // Параметри з посилання мають пріоритет над збереженими даними. Після застосування прибираємо їх з адресного рядка,
+  // щоб перезавантаження сторінки не затирало подальші правки.
+  function applyUrlParams() {
+    var p = new URLSearchParams(location.search);
+    var known = fields.concat(['wa', 'promo', 'banner', 'lang']);
+    var has = known.some(function (k) { return p.has(k); });
+    if (!has) return;
+    fields.forEach(function (f) { $(f).value = ''; });
+    fields.forEach(function (f) {
+      if (!p.has(f)) return;
+      var v = p.get(f).trim().slice(0, $(f).maxLength > 0 ? $(f).maxLength : 500);
+      $(f).value = f === 'email' ? emailLocal(v) : v;
+    });
+    $('waSame').checked = p.get('wa') === 'mobile';
+    if (p.has('promo')) {
+      var promo = p.get('promo');
+      $('promo').value = promo === 'none' ? '' : (findPromo(promo) ? promo : DEFAULT_PROMO);
+    } else {
+      $('promo').value = DEFAULT_PROMO;
+    }
+    $('showBanner').checked = p.get('banner') !== '0';
+    if (p.has('lang') && I18N[p.get('lang')]) lang = p.get('lang');
+    try { history.replaceState(null, '', location.pathname + location.hash); } catch (e) { /* noop */ }
+  }
+
   function load() {
     try {
       var s = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
@@ -529,6 +575,13 @@
     });
   });
 
+  $('copyLinkBtn').addEventListener('click', function () {
+    var btn = this;
+    copyText(buildShareUrl()).then(function (ok) {
+      if (ok) { flash(btn); setStatus(t('copiedLinkHint')); } else { setStatus(t('copyFail'), true); }
+    });
+  });
+
   $('downloadBtn').addEventListener('click', function () {
     if (!guard()) return;
     var d = data();
@@ -642,6 +695,7 @@
   renderPromoOptions();
   $('promo').value = DEFAULT_PROMO;
   load();
+  applyUrlParams();
   applyLang();
   $('hostingNotice').hidden = assetsArePublic();
   syncWaSame();
