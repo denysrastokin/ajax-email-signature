@@ -211,8 +211,8 @@
   // Ширина банера задана атрибутом width (для Outlook) та width:100%/max-width (для адаптиву в решті клієнтів).
   function buildSignature(d) {
     var base = assetBase();
-    var name = d.name || 'Denys Rastokin';
-    var title = d.title || 'Email Marketing Team Lead';
+    var name = d.name || 'John Smith';
+    var title = d.title || 'Marketing Manager';
     var text = 'font-family:' + FONT + ';font-size:14px;line-height:21px;mso-line-height-rule:exactly;color:' + INK + ';';
     var link = 'color:' + INK + ';text-decoration:none;';
 
@@ -221,11 +221,11 @@
     var lines = [esc(title) + ' | ' + COMPANY];
     // Поки форма порожня, у прев'ю показуємо приклад повністю, разом з телефоном.
     var pristine = !d.name && !d.title && !d.mobile && !d.email;
-    var mobile = d.mobile || (pristine ? '+380661393834' : '');
+    var mobile = d.mobile || (pristine ? '+380 50 123 4567' : '');
     if (mobile) {
       lines.push('<b style="font-weight:700;">Mobile:</b> <a href="' + esc(telHref(mobile)) + '" style="' + link + '">' + esc(mobile) + '</a>');
     }
-    var email = d.email || 'rastokin.d@ajax.systems';
+    var email = d.email || 'smith.j@ajax.systems';
     lines.push('<b style="font-weight:700;">Email:</b> <a href="mailto:' + esc(email) + '" style="' + link + '">' + esc(email) + '</a>');
 
     var rows = [];
@@ -286,9 +286,9 @@
   }
 
   function buildPlain(d) {
-    var out = [d.name || 'Denys Rastokin', (d.title || 'Email Marketing Team Lead') + ' | ' + COMPANY];
+    var out = [d.name || 'John Smith', (d.title || 'Marketing Manager') + ' | ' + COMPANY];
     if (d.mobile) out.push('Mobile: ' + d.mobile);
-    out.push('Email: ' + (d.email || 'rastokin.d@ajax.systems'));
+    out.push('Email: ' + (d.email || 'smith.j@ajax.systems'));
     var promo = findPromo(d.promo);
     if (promo) out.push('', promo.text + ': ' + promo.url);
     if (d.showBanner) out.push('', SITE_URL);
