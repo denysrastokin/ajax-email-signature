@@ -14,6 +14,7 @@
   // Варіанти промо-блоку внизу підпису (випадаючий список «Promo block»); у підписі показується один вибраний.
   // type 'link'   — текстове посилання з іконкою: text, url, icon (файл у assets/ подвійного розміру).
   // type 'banner' — картинка на всю ширину підпису: url, image (файл у assets/ шириною 2× від width).
+  // type 'logo'   — лише логотип фіксованого розміру: url, image (width, height; файл у assets/ подвійного розміру).
   var PROMO_LINKS = [
     {
       id: 'youtube-pro',
@@ -29,6 +30,13 @@
       label: { en: 'Ajax banner with awards', uk: 'Банер Ajax з нагородами' },
       url: SITE_URL,
       image: { src: 'ajax-banner.jpg', width: 420, alt: 'Ajax Systems — award-winning security systems' }
+    },
+    {
+      id: 'ajax-logo',
+      type: 'logo',
+      label: { en: 'Ajax logo', uk: 'Логотип Ajax' },
+      url: SITE_URL,
+      image: { src: 'ajax-logo.png', width: 98, height: 22, alt: 'Ajax Systems' }
     }
   ];
   var DEFAULT_PROMO = 'youtube-pro';
@@ -380,6 +388,15 @@
         '</a>' +
       '</td></tr>';
     }
+    if (promo.type === 'logo') {
+      var lg = promo.image;
+      return '<tr><td style="padding:' + gapTop + 'px 0 0 0;line-height:0;font-size:0;">' +
+        '<a href="' + esc(promo.url) + '" target="_blank" style="text-decoration:none;">' +
+          '<img src="' + base + lg.src + '" width="' + lg.width + '" height="' + lg.height + '" alt="' + esc(lg.alt) + '" ' +
+          'style="display:block;width:' + lg.width + 'px;height:' + lg.height + 'px;border:0;outline:none;' + fontStyle(14, 21, INK) + '">' +
+        '</a>' +
+      '</td></tr>';
+    }
     var iconCell = '';
     if (promo.icon) {
       var ic = promo.icon;
@@ -510,7 +527,7 @@
     if (d.meetingStyle !== 'icon' && meetingUrl(d.meeting)) out.push(MEETING.text + ': ' + meetingUrl(d.meeting));
     socialLinks(d).forEach(function (sl) { out.push(sl.alt + ': ' + sl.url); });
     var promo = findPromo(d.promo);
-    if (promo) out.push('', promo.type === 'banner' ? promo.url : promo.text + ': ' + promo.url);
+    if (promo) out.push('', promo.text ? promo.text + ': ' + promo.url : promo.url);
     return out.join('\n');
   }
 
