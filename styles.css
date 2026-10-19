@@ -125,11 +125,10 @@ button { font: inherit; color: inherit; }
 .mail.is-mobile { max-width: 375px; }
 .mail__bar { display: flex; gap: 6px; padding: 10px 14px; background: #f7f7f7; border-bottom: 1px solid var(--line); }
 .mail__dot { width: 10px; height: 10px; border-radius: 50%; background: #dcdcdc; }
-.mail__meta { padding: 20px 20px 0; }
+.mail__meta { padding: 20px 20px 14px; }
 .mail__line { height: 9px; border-radius: 5px; background: #efefef; margin-bottom: 10px; }
 .mail__line--short { width: 35%; }
 .mail__line--mid { width: 70%; }
-.mail__regards { margin: 18px 0 12px; font: 14px/1.5 Arial, sans-serif; color: #222; }
 .mail__frame { display: block; width: 100%; border: 0; height: 200px; padding: 0 20px 20px; background: #fff; }
 
 .notice {
@@ -177,6 +176,6 @@ button { font: inherit; color: inherit; }
   .topbar__inner { padding: 12px 16px; }
   .brand__title { display: none; }
   .actions .btn { flex: 1 1 100%; justify-content: center; }
-  .mail__meta { padding: 16px 14px 0; }
+  .mail__meta { padding: 16px 14px 12px; }
   .mail__frame { padding: 0 14px 16px; }
 }

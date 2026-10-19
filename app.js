@@ -26,6 +26,8 @@
   var STORAGE_KEY = 'ajax-signature-v2';
   var FONT = "Roboto, Arial, Helvetica, sans-serif";
   var INK = '#222222';
+  // Роздільна лінія над підписом: відділяє його від тексту листа.
+  var DIVIDER = { color: '#DDDDDD', gap: 16 };
   // Ім'я трохи більше за решту тексту (14px / 21px).
   var NAME = { fontSize: 19, lineHeight: 27 };
   // Фото ліворуч від контактів: висота = рядок імені (27px) + 3 рядки тексту по 21px = 90px.
@@ -269,7 +271,9 @@
     var email = d.email || 'smith.j@ajax.systems';
     lines.push('<b style="font-weight:700;">Email:</b> <a href="mailto:' + esc(email) + '" style="' + link + '">' + esc(email) + '</a>');
 
-    var rows = [];
+    // Лінія через border-top на комірці: так її однаково малюють Gmail, Apple Mail і Outlook (Word).
+    var rows = ['<tr><td height="' + DIVIDER.gap + '" style="border-top:1px solid ' + DIVIDER.color + ';height:' + DIVIDER.gap + 'px;' +
+      'line-height:' + DIVIDER.gap + 'px;font-size:1px;mso-line-height-rule:exactly;padding:0;">&nbsp;</td></tr>'];
     var socials = socialLinks(d);
     var socialRow = '';
     if (socials.length) {
