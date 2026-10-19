@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Ajax Email Signature</title>
   <meta name="description" content="Email signature generator for Ajax Systems employees">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' https:; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta name="referrer" content="no-referrer">
   <link rel="icon" href="assets/favicon-16x16.png" type="image/png" sizes="16x16">
   <link rel="icon" href="assets/favicon-32x32.png" type="image/png" sizes="32x32">
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" sizes="180x180">
@@ -28,6 +30,11 @@
     <section class="panel panel--form" aria-labelledby="form-title">
       <h1 id="form-title" class="panel__title" data-i18n="formTitle">Your details</h1>
       <p class="panel__lead" data-i18n="formLead">Fill in the fields in Latin characters — the signature updates instantly.</p>
+
+      <div class="notice notice--info" id="prefillNotice" role="status" hidden>
+        <strong data-i18n="prefillTitle">This form was filled from a link.</strong>
+        <span data-i18n="prefillText">Check all details, especially the photo and links, before copying the signature.</span>
+      </div>
 
       <form id="form" novalidate autocomplete="on">
         <div class="field">

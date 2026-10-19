@@ -76,6 +76,8 @@
       copiedHtmlHint: 'HTML-код скопійовано.',
       copyLink: 'Скопіювати посилання на підпис',
       copiedLinkHint: 'Посилання скопійовано. Хто його відкриє, побачить форму, заповнену цими даними.',
+      prefillTitle: 'Форму заповнено з посилання.',
+      prefillText: 'Перевірте всі дані, особливо фото й посилання, перш ніж копіювати підпис.',
       copyFail: 'Не вдалося скопіювати автоматично. Виділіть підпис у прев\'ю мишею та натисніть Ctrl+C.',
       required: "Заповніть обов'язкові поля: ім'я, посаду та коректний email.",
       tooLong: 'Підпис довший за ліміт Gmail (10 000 символів).',
@@ -141,6 +143,8 @@
       copiedHtmlHint: 'HTML code copied.',
       copyLink: 'Copy signature link',
       copiedLinkHint: 'Link copied. Anyone who opens it will see the form prefilled with these details.',
+      prefillTitle: 'This form was filled from a link.',
+      prefillText: 'Check all details, especially the photo and links, before copying the signature.',
       copyFail: 'Automatic copy failed. Select the signature in the preview with your mouse and press Ctrl+C.',
       required: 'Please fill in the required fields: name, job title and a valid email.',
       tooLong: 'The signature exceeds the Gmail limit (10,000 characters).',
@@ -196,8 +200,9 @@
     var v = /^https?:\/\//i.test(s) ? s : 'https://' + s.replace(/^\/+/, '');
     try {
       var u = new URL(v);
-      if (!/(^|\.)linkedin\.com$/i.test(u.hostname) || u.pathname.length < 2) return null;
-      return 'https://www.linkedin.com' + u.pathname.replace(/\/+$/, '');
+      var m = u.pathname.match(/^\/in\/([A-Za-z0-9\-_.%]+)/i);
+      if (!/(^|\.)linkedin\.com$/i.test(u.hostname) || !m) return null;
+      return 'https://www.linkedin.com/in/' + m[1];
     } catch (e) { return null; }
   }
   function telegramUrl(s) {
@@ -223,6 +228,7 @@
   function isEmailLocal(s) { return /^[A-Za-z0-9_+-]+(\.[A-Za-z0-9_+-]+)*$/.test(s); }
   // Повна адреса з автозаповнення чи вставки → лише частина до «@».
   function emailLocal(s) { return String(s || '').trim().split('@')[0]; }
+  function hasLang(l) { return typeof l === 'string' && Object.prototype.hasOwnProperty.call(I18N, l); }
   function t(key) { return I18N[lang][key] || I18N.en[key] || ''; }
 
   function assetBase() {
@@ -441,7 +447,8 @@
       $('promo').value = DEFAULT_PROMO;
     }
     $('showBanner').checked = p.get('banner') !== '0';
-    if (p.has('lang') && I18N[p.get('lang')]) lang = p.get('lang');
+    if (p.has('lang') && hasLang(p.get('lang'))) lang = p.get('lang');
+    $('prefillNotice').hidden = false;
     try { history.replaceState(null, '', location.pathname + location.hash); } catch (e) { /* noop */ }
   }
 
@@ -457,7 +464,7 @@
         if (typeof s.d.showBanner === 'boolean') $('showBanner').checked = s.d.showBanner;
         if (typeof s.d.waSame === 'boolean') $('waSame').checked = s.d.waSame;
       }
-      if (s.lang && I18N[s.lang]) lang = s.lang;
+      if (hasLang(s.lang)) lang = s.lang;
     } catch (e) { /* noop */ }
   }
 

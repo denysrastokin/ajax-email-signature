@@ -140,6 +140,7 @@ button { font: inherit; color: inherit; }
 .mail__line--mid { width: 70%; }
 .mail__frame { display: block; width: 100%; border: 0; height: 200px; padding: 0 20px 20px; background: #fff; }
 
+.notice.notice--info { margin: 0 0 16px; background: #eef4ff; border-color: #c9dafc; color: #1d3f86; }
 .notice {
   margin-top: 16px; padding: 12px 14px; border-radius: 10px; background: #fff7e0; border: 1px solid #f3dd9b;
   font-size: 13px; color: #6a5300;
