@@ -26,8 +26,10 @@
   var STORAGE_KEY = 'ajax-signature-v2';
   var FONT = "Roboto, Arial, Helvetica, sans-serif";
   var INK = '#222222';
-  // Фото ліворуч від контактів: висота = 4 рядки тексту по 21px.
-  var PHOTO = { size: 84, radius: 16, gap: 10, minSource: 168 };
+  // Ім'я трохи більше за решту тексту (14px / 21px).
+  var NAME = { fontSize: 17, lineHeight: 25 };
+  // Фото ліворуч від контактів: висота = рядок імені (25px) + 3 рядки тексту по 21px = 88px.
+  var PHOTO = { size: 88, radius: 16, gap: 10, minSource: 176 };
 
   var I18N = {
     uk: {
@@ -42,11 +44,11 @@
       fEmail: 'Email',
       emailError: 'Перевірте формат email',
       fPhoto: "Посилання на фото (необов'язково)",
-      photoHint: 'Квадратне зображення від 168×168 px, публічне https-посилання.',
+      photoHint: 'Квадратне зображення від 176×176 px, публічне https-посилання.',
       photoNotHttps: 'Потрібне посилання, що починається з https:// — інакше фото не додається в підпис.',
       photoLoadError: 'Не вдалося завантажити зображення. Перевірте, що посилання публічне і веде прямо на картинку.',
       photoNotSquare: 'Фото не квадратне — у підписі воно буде розтягнуте. Обріжте його до квадрата.',
-      photoSmall: 'Фото менше 168×168 px — на екранах Retina воно може бути нечітким.',
+      photoSmall: 'Фото менше 176×176 px — на екранах Retina воно може бути нечітким.',
       photoDrive: 'Це посилання на сторінку перегляду (Google Drive / OneDrive / SharePoint), а не на саму картинку. Використайте пряме посилання на файл зображення.',
       blocks: 'Блоки підпису',
       tBanner: 'Банер Ajax з нагородами',
@@ -101,11 +103,11 @@
       fEmail: 'Email',
       emailError: 'Please check the email format',
       fPhoto: 'Photo URL (optional)',
-      photoHint: 'Square image, at least 168×168 px, public https link.',
+      photoHint: 'Square image, at least 176×176 px, public https link.',
       photoNotHttps: 'The link must start with https:// — otherwise the photo is not added to the signature.',
       photoLoadError: 'Could not load the image. Make sure the link is public and points directly to the image.',
       photoNotSquare: 'The photo is not square — it will be stretched in the signature. Crop it to a square.',
-      photoSmall: 'The photo is smaller than 168×168 px — it may look blurry on Retina screens.',
+      photoSmall: 'The photo is smaller than 176×176 px — it may look blurry on Retina screens.',
       photoDrive: 'This is a viewer page link (Google Drive / OneDrive / SharePoint), not the image itself. Use a direct link to the image file.',
       blocks: 'Signature blocks',
       tBanner: 'Ajax banner with awards',
@@ -214,8 +216,9 @@
     var text = 'font-family:' + FONT + ';font-size:14px;line-height:21px;mso-line-height-rule:exactly;color:' + INK + ';';
     var link = 'color:' + INK + ';text-decoration:none;';
 
-    var head = '<b style="font-weight:700;">' + esc(name) + '</b><br>' + esc(title) + ' | ' + COMPANY;
-    var lines = [head];
+    // Ім'я окремим блоком: Outlook застосовує line-height до всього абзацу, тож різні висоти рядків мають бути в різних блоках.
+    var nameBlock = '<div style="font-size:' + NAME.fontSize + 'px;line-height:' + NAME.lineHeight + 'px;mso-line-height-rule:exactly;font-weight:700;">' + esc(name) + '</div>';
+    var lines = [esc(title) + ' | ' + COMPANY];
     // Поки форма порожня, у прев'ю показуємо приклад повністю, разом з телефоном.
     var pristine = !d.name && !d.title && !d.mobile && !d.email;
     var mobile = d.mobile || (pristine ? '+380661393834' : '');
@@ -226,7 +229,7 @@
     lines.push('<b style="font-weight:700;">Email:</b> <a href="mailto:' + esc(email) + '" style="' + link + '">' + esc(email) + '</a>');
 
     var rows = [];
-    var contacts = '<td style="' + text + 'padding:0;vertical-align:top;">' + lines.join('<br>') + '</td>';
+    var contacts = '<td style="' + text + 'padding:0;vertical-align:top;">' + nameBlock + '<div>' + lines.join('<br>') + '</div></td>';
     if (isHttpsUrl(d.photo)) {
       // Вкладена таблиця: фото ліворуч, контакти праворуч. border-radius ігнорує лише класичний Outlook (кути будуть прямі).
       contacts =
