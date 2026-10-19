@@ -74,7 +74,16 @@ button { font: inherit; color: inherit; }
 .select select:hover { border-color: #c9c9c9; }
 .select select:focus { outline: none; border-color: var(--focus); background: #fff; box-shadow: 0 0 0 3px rgba(47,124,246,.15); }
 .field__error { display: none; color: var(--err); font-size: 12px; }
-.field input.is-invalid + .field__error { display: block; }
+.field input.is-invalid + .field__error,
+.input-group:has(input.is-invalid) + .field__error { display: block; }
+
+/* Email: editable part before @ + fixed domain */
+.input-group { display: flex; min-width: 0; }
+.input-group input { flex: 1 1 auto; min-width: 0; border-top-right-radius: 0; border-bottom-right-radius: 0; }
+.input-group__suffix {
+  display: flex; align-items: center; padding: 0 14px; white-space: nowrap;
+  border: 1px solid var(--line); border-left: 0; border-radius: 0 10px 10px 0; background: #f0f0f0; color: var(--muted);
+}
 .field__hint { color: var(--muted); font-size: 12px; }
 .field__warn { color: #9a6700; font-size: 12px; }
 

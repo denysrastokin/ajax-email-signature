@@ -7,6 +7,8 @@
   var ASSET_BASE_URL = '';
 
   var COMPANY = 'Ajax Systems';
+  // Домен пошти зафіксований: користувач вводить лише частину до «@».
+  var EMAIL_DOMAIN = 'ajax.systems';
   var SITE_URL = 'https://ajax.systems/';
 
   // Варіанти посилання під контактами (випадаючий список «Featured link»).
@@ -46,7 +48,7 @@
       promoNone: '— Без посилання —',
       fMobile: 'Мобільний',
       fEmail: 'Email',
-      emailError: 'Перевірте формат email',
+      emailError: 'Лише частина до «@»: латинські літери, цифри, крапка, дефіс або підкреслення.',
       fPhoto: "Посилання на фото (необов'язково)",
       photoHint: 'Квадратне зображення від 180×180 px, публічне https-посилання.',
       photoNotHttps: 'Потрібне посилання, що починається з https:// — інакше фото не додається в підпис.',
@@ -109,7 +111,7 @@
       promoNone: '— No link —',
       fMobile: 'Mobile',
       fEmail: 'Email',
-      emailError: 'Please check the email format',
+      emailError: 'Only the part before “@”: Latin letters, digits, dot, hyphen or underscore.',
       fPhoto: 'Photo URL (optional)',
       photoHint: 'Square image, at least 180×180 px, public https link.',
       photoNotHttps: 'The link must start with https:// — otherwise the photo is not added to the signature.',
@@ -213,7 +215,10 @@
       { url: whatsappUrl(wa), icon: 'whatsapp.png', alt: 'WhatsApp' }
     ].filter(function (x) { return x.url; });
   }
-  function isEmail(s) { return /^[^\s@<>"]+@[^\s@<>"]+\.[^\s@<>"]{2,}$/.test(s); }
+  // Локальна частина адреси (до «@»): без пробілів, крапка не на початку/в кінці й не двічі поспіль.
+  function isEmailLocal(s) { return /^[A-Za-z0-9_+-]+(\.[A-Za-z0-9_+-]+)*$/.test(s); }
+  // Повна адреса з автозаповнення чи вставки → лише частина до «@».
+  function emailLocal(s) { return String(s || '').trim().split('@')[0]; }
   function t(key) { return I18N[lang][key] || I18N.en[key] || ''; }
 
   function assetBase() {
@@ -229,6 +234,7 @@
   function data() {
     var d = {};
     fields.forEach(function (f) { d[f] = $(f).value.trim(); });
+    d.email = d.email ? d.email + '@' + EMAIL_DOMAIN : '';
     d.promo = $('promo').value;
     d.showBanner = $('showBanner').checked;
     d.waSame = $('waSame').checked;
@@ -398,7 +404,9 @@
       var s = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
       if (!s) return;
       if (s.d) {
-        fields.forEach(function (f) { if (typeof s.d[f] === 'string') $(f).value = s.d[f]; });
+        fields.forEach(function (f) {
+          if (typeof s.d[f] === 'string') $(f).value = f === 'email' ? emailLocal(s.d[f]) : s.d[f];
+        });
         if (typeof s.d.promo === 'string') $('promo').value = findPromo(s.d.promo) ? s.d.promo : '';
         if (typeof s.d.showBanner === 'boolean') $('showBanner').checked = s.d.showBanner;
         if (typeof s.d.waSame === 'boolean') $('waSame').checked = s.d.waSame;
@@ -430,7 +438,7 @@
       if (showErrors) $(f).classList.toggle('is-invalid', bad);
     });
     var e = $('email').value.trim();
-    var badEmail = !isEmail(e);
+    var badEmail = !isEmailLocal(e);
     if (badEmail) ok = false;
     if (showErrors || (e && badEmail === false)) $('email').classList.toggle('is-invalid', badEmail);
     return ok;
@@ -597,9 +605,12 @@
   $('waSame').addEventListener('change', syncWaSame);
   $('mobile').addEventListener('input', function () { if ($('waSame').checked) syncWaSame(); });
 
+  $('email').addEventListener('input', function () {
+    if (this.value.indexOf('@') !== -1) this.value = emailLocal(this.value);
+  });
   $('email').addEventListener('blur', function () {
     var v = this.value.trim();
-    this.classList.toggle('is-invalid', !!v && !isEmail(v));
+    this.classList.toggle('is-invalid', !!v && !isEmailLocal(v));
   });
 
   document.querySelectorAll('.seg__btn').forEach(function (b) {
