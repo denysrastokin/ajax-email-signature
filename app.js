@@ -27,9 +27,9 @@
   var FONT = "Roboto, Arial, Helvetica, sans-serif";
   var INK = '#222222';
   // Ім'я трохи більше за решту тексту (14px / 21px).
-  var NAME = { fontSize: 17, lineHeight: 25 };
-  // Фото ліворуч від контактів: висота = рядок імені (25px) + 3 рядки тексту по 21px = 88px.
-  var PHOTO = { size: 88, radius: 16, gap: 10, minSource: 176 };
+  var NAME = { fontSize: 19, lineHeight: 27 };
+  // Фото ліворуч від контактів: висота = рядок імені (27px) + 3 рядки тексту по 21px = 90px.
+  var PHOTO = { size: 90, radius: 16, gap: 10, minSource: 180 };
   // Іконки соцмереж і месенджерів під контактами: круглі, 22px (файли 44×44 для Retina).
   var SOCIAL = { size: 22, gap: 8 };
 
@@ -46,11 +46,11 @@
       fEmail: 'Email',
       emailError: 'Перевірте формат email',
       fPhoto: "Посилання на фото (необов'язково)",
-      photoHint: 'Квадратне зображення від 176×176 px, публічне https-посилання.',
+      photoHint: 'Квадратне зображення від 180×180 px, публічне https-посилання.',
       photoNotHttps: 'Потрібне посилання, що починається з https:// — інакше фото не додається в підпис.',
       photoLoadError: 'Не вдалося завантажити зображення. Перевірте, що посилання публічне і веде прямо на картинку.',
       photoNotSquare: 'Фото не квадратне — у підписі воно буде розтягнуте. Обріжте його до квадрата.',
-      photoSmall: 'Фото менше 176×176 px — на екранах Retina воно може бути нечітким.',
+      photoSmall: 'Фото менше 180×180 px — на екранах Retina воно може бути нечітким.',
       photoDrive: 'Це посилання на сторінку перегляду (Google Drive / OneDrive / SharePoint), а не на саму картинку. Використайте пряме посилання на файл зображення.',
       socialTitle: 'Додати соцмережі та месенджери',
       waSame: 'Такий самий, як мобільний',
@@ -109,11 +109,11 @@
       fEmail: 'Email',
       emailError: 'Please check the email format',
       fPhoto: 'Photo URL (optional)',
-      photoHint: 'Square image, at least 176×176 px, public https link.',
+      photoHint: 'Square image, at least 180×180 px, public https link.',
       photoNotHttps: 'The link must start with https:// — otherwise the photo is not added to the signature.',
       photoLoadError: 'Could not load the image. Make sure the link is public and points directly to the image.',
       photoNotSquare: 'The photo is not square — it will be stretched in the signature. Crop it to a square.',
-      photoSmall: 'The photo is smaller than 176×176 px — it may look blurry on Retina screens.',
+      photoSmall: 'The photo is smaller than 180×180 px — it may look blurry on Retina screens.',
       photoDrive: 'This is a viewer page link (Google Drive / OneDrive / SharePoint), not the image itself. Use a direct link to the image file.',
       socialTitle: 'Add social networks & messengers',
       waSame: 'Same as mobile',
