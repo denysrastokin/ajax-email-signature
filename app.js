@@ -80,8 +80,6 @@
       previewTitle: "Прев'ю",
       desktop: "Комп'ютер",
       mobile: 'Телефон',
-      noticeTitle: 'Зображення поки локальні.',
-      noticeText: 'Розмістіть застосунок на публічному сервері (або вкажіть ASSET_BASE_URL в app.js), інакше банер та іконка не відобразяться в листах.',
       copy: 'Скопіювати підпис',
       copyHtml: 'Скопіювати HTML-код',
       download: 'Завантажити .htm',
@@ -150,8 +148,6 @@
       previewTitle: 'Preview',
       desktop: 'Desktop',
       mobile: 'Mobile',
-      noticeTitle: 'Images are local for now.',
-      noticeText: 'Host the app on a public server (or set ASSET_BASE_URL in app.js), otherwise the banner and icon will not show up in emails.',
       copy: 'Copy signature',
       copyHtml: 'Copy HTML code',
       download: 'Download .htm',
@@ -274,11 +270,6 @@
   function assetBase() {
     if (ASSET_BASE_URL) return ASSET_BASE_URL.replace(/\/?$/, '/');
     return new URL('assets/', location.href).href;
-  }
-  function assetsArePublic() {
-    if (ASSET_BASE_URL) return true;
-    var h = location.hostname;
-    return /^https?:$/.test(location.protocol) && !/^(localhost|127\.0\.0\.1|\[::1\]|.*\.local|.*\.test)$/.test(h);
   }
 
   function data() {
@@ -767,7 +758,6 @@
   load();
   applyUrlParams();
   applyLang();
-  $('hostingNotice').hidden = assetsArePublic();
   syncWaSame();
   // Блок соцмереж згорнутий, але відкривається сам, якщо щось уже заповнено.
   if ($('linkedin').value || $('telegram').value || $('whatsapp').value || $('waSame').checked || $('meeting').value) {
