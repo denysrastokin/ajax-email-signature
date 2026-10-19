@@ -654,18 +654,20 @@
     var d = data();
     current.html = buildSignature(d);
     current.plain = buildPlain(d);
+    writePreview(previewTheme);
+    save(d);
+    updateProgress();
+  }
 
+  function writePreview(theme) {
     var doc = frame.contentDocument;
     doc.open();
     doc.write('<!DOCTYPE html><html><head><meta charset="utf-8"><style>html,body{margin:0;padding:0;background:#fff;}' +
-      (previewTheme === 'dark' ? DARK_PREVIEW_CSS : '') + '</style></head><body>' + current.html + '</body></html>');
+      (theme === 'dark' ? DARK_PREVIEW_CSS : '') + '</style></head><body>' + current.html + '</body></html>');
     doc.close();
     fitFrame();
     var imgs = doc.images;
     for (var i = 0; i < imgs.length; i++) imgs[i].addEventListener('load', fitFrame);
-
-    save(d);
-    updateProgress();
   }
 
   function fitFrame() {
@@ -809,7 +811,14 @@
   }
 
   // Запасний варіант: виділяємо відрендерений підпис у прев'ю й копіюємо як у звичайному браузері.
+  // Браузер переносить у скопійоване стилі з прев'ю, тож «Темну пошту» на час копіювання вимикаємо:
+  // інакше в підпис потрапили б інвертовані картинки.
   function copyBySelection() {
+    if (previewTheme !== 'dark') return selectAndCopy();
+    writePreview('light');
+    try { return selectAndCopy(); } finally { writePreview('dark'); }
+  }
+  function selectAndCopy() {
     try {
       var doc = frame.contentDocument;
       var win = frame.contentWindow;
@@ -845,12 +854,17 @@
     if (current.html.length > GMAIL_LIMIT) { setStatus(t('tooLong'), true); }
     return true;
   }
+  // Після копіювання попередження про ліміт Gmail лишається видимим, а не замінюється підказкою.
+  function copiedStatus(hintKey) {
+    if (current.html.length > GMAIL_LIMIT) setStatus(t('copied') + ' ' + t('tooLong'), true);
+    else setStatus(t(hintKey));
+  }
 
   $('copyBtn').addEventListener('click', function () {
     if (!guard()) return;
     var btn = this;
     copyRich().then(function (ok) {
-      if (ok) { flash(btn); setStatus(t('copiedHint')); onCopied(); } else { setStatus(t('copyFail'), true); }
+      if (ok) { flash(btn); copiedStatus('copiedHint'); onCopied(); } else { setStatus(t('copyFail'), true); }
     });
   });
 
@@ -858,7 +872,7 @@
     if (!guard()) return;
     var btn = this;
     copyText(current.html).then(function (ok) {
-      if (ok) { flash(btn); setStatus(t('copiedHtmlHint')); } else { setStatus(t('copyFail'), true); }
+      if (ok) { flash(btn); copiedStatus('copiedHtmlHint'); } else { setStatus(t('copyFail'), true); }
     });
   });
 
