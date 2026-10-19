@@ -28,7 +28,11 @@
 
   <main class="layout">
     <section class="panel panel--form" aria-labelledby="form-title">
-      <h1 id="form-title" class="panel__title" data-i18n="formTitle">Your details</h1>
+      <div class="form-head">
+        <h1 id="form-title" class="panel__title" data-i18n="formTitle">Your details</h1>
+        <span class="form-head__count" id="reqCount"></span>
+      </div>
+      <div class="meter" aria-hidden="true"><div class="meter__bar" id="reqBar"></div></div>
       <p class="panel__lead" data-i18n="formLead">Fill in the fields in Latin characters — the signature updates instantly.</p>
 
       <div class="notice notice--info" id="prefillNotice" role="status" hidden>
@@ -37,9 +41,9 @@
       </div>
 
       <form id="form" novalidate autocomplete="on">
-        <div class="field">
-          <span class="field__label" id="design-label" data-i18n="fDesign">Signature design</span>
-          <div class="designs" role="radiogroup" aria-labelledby="design-label">
+        <fieldset class="section">
+          <legend class="section__title"><span class="section__num">1</span> <span data-i18n="secDesign">Design</span></legend>
+          <div class="designs" role="radiogroup" aria-label="Signature design">
             <label class="design">
               <input type="radio" name="design" value="classic" checked>
               <span class="thumb" aria-hidden="true">
@@ -58,84 +62,126 @@
               <span class="design__name">Modern</span>
             </label>
           </div>
-        </div>
+        </fieldset>
 
-        <div class="field">
-          <label for="name"><span data-i18n="fName">Full name</span> <span class="req">*</span></label>
-          <input id="name" name="name" type="text" autocomplete="name" placeholder="John Smith" maxlength="60" required>
-        </div>
-        <div class="field">
-          <label for="title"><span data-i18n="fTitle">Job title</span> <span class="req">*</span></label>
-          <input id="title" name="title" type="text" autocomplete="organization-title" placeholder="Marketing Manager" maxlength="80" required>
-        </div>
-        <div class="field">
-          <label for="mobile" data-i18n="fMobile">Mobile</label>
-          <input id="mobile" name="mobile" type="tel" autocomplete="tel" placeholder="+380 50 123 4567" maxlength="30">
-        </div>
-        <div class="field">
-          <label for="email"><span data-i18n="fEmail">Email</span> <span class="req">*</span></label>
-          <div class="input-group">
-            <input id="email" name="email" type="text" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" placeholder="smith.j" maxlength="64" required>
-            <span class="input-group__suffix" aria-hidden="true">@ajax.systems</span>
-          </div>
-          <span class="field__error" data-i18n="emailError">Only the part before “@”: Latin letters, digits, dot, hyphen or underscore.</span>
-        </div>
-        <div class="field">
-          <label for="photo" data-i18n="fPhoto">Photo URL (optional)</label>
-          <input id="photo" name="photo" type="url" inputmode="url" placeholder="https://…/photo.jpg" maxlength="500">
-          <span class="field__hint" data-i18n="photoHint">Square image, at least 180×180 px, public https link.</span>
-          <span class="field__warn" id="photo-warning" hidden></span>
-        </div>
-
-        <details class="extras" id="socialBlock">
-          <summary class="extras__summary"><span data-i18n="socialTitle">Add social networks &amp; messengers</span></summary>
-          <div class="extras__body">
+        <fieldset class="section">
+          <legend class="section__title"><span class="section__num">2</span> <span data-i18n="secContacts">Contacts</span></legend>
+          <div class="grid2">
             <div class="field">
+              <label for="name"><span data-i18n="fName">Full name</span> <span class="req">*</span></label>
+              <input id="name" name="name" type="text" autocomplete="name" placeholder="John Smith" maxlength="60" required>
+            </div>
+            <div class="field">
+              <label for="title"><span data-i18n="fTitle">Job title</span> <span class="req">*</span></label>
+              <input id="title" name="title" type="text" autocomplete="organization-title" placeholder="Marketing Manager" maxlength="80" required>
+            </div>
+          </div>
+          <div class="field">
+            <label for="email"><span data-i18n="fEmail">Email</span> <span class="req">*</span></label>
+            <div class="input-group">
+              <input id="email" name="email" type="text" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" placeholder="smith.j" maxlength="64" required>
+              <span class="input-group__suffix" aria-hidden="true">@ajax.systems</span>
+            </div>
+            <span class="field__error" data-i18n="emailError">Only the part before “@”: Latin letters, digits, dot, hyphen or underscore.</span>
+          </div>
+          <div class="field">
+            <label for="mobile" data-i18n="fMobile">Mobile</label>
+            <input id="mobile" name="mobile" type="tel" autocomplete="tel" placeholder="+380 50 123 4567" maxlength="30">
+          </div>
+        </fieldset>
+
+        <fieldset class="section">
+          <legend class="section__title"><span class="section__num">3</span> <span data-i18n="secPhoto">Photo</span> <span class="section__opt" data-i18n="optional">(optional)</span></legend>
+          <div class="field">
+            <label for="photo" class="sr-only" data-i18n="fPhotoUrl">Photo URL</label>
+            <div class="photo-row">
+              <span class="photo-thumb" id="photoThumb" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="9" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>
+                <img alt="">
+              </span>
+              <input id="photo" name="photo" type="url" inputmode="url" placeholder="https://…/photo.jpg" maxlength="500">
+            </div>
+            <span class="field__hint" data-i18n="photoHint">Square image, at least 180×180 px, public https link.</span>
+            <span class="field__warn" id="photo-warning" hidden></span>
+          </div>
+        </fieldset>
+
+        <fieldset class="section">
+          <legend class="section__title"><span class="section__num">4</span> <span data-i18n="secSocial">Socials &amp; meeting</span></legend>
+          <span class="field__hint social-hint" data-i18n="socialChipsHint">Add the networks you need — icons appear under your contacts.</span>
+          <div class="chips">
+            <button type="button" class="chip" data-social="linkedin">LinkedIn</button>
+            <button type="button" class="chip" data-social="telegram">Telegram</button>
+            <button type="button" class="chip" data-social="whatsapp">WhatsApp</button>
+            <button type="button" class="chip" data-social="meeting" data-i18n="chipMeeting">Meeting link</button>
+          </div>
+
+          <div class="field social" data-social-field="linkedin" hidden>
+            <div class="social__head">
               <label for="linkedin">LinkedIn</label>
-              <input id="linkedin" name="linkedin" type="url" inputmode="url" placeholder="linkedin.com/in/john-smith" maxlength="200">
-              <span class="field__warn" id="linkedin-warning" hidden></span>
+              <button type="button" class="social__remove" data-social-remove="linkedin"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg><span class="sr-only"><span data-i18n="removeSocial">Remove</span> LinkedIn</span></button>
             </div>
-            <div class="field">
+            <input id="linkedin" name="linkedin" type="url" inputmode="url" placeholder="linkedin.com/in/john-smith" maxlength="200">
+            <span class="field__hint" data-empty-hint="linkedin" data-i18n="socialEmpty"></span>
+            <span class="field__warn" id="linkedin-warning" hidden></span>
+          </div>
+          <div class="field social" data-social-field="telegram" hidden>
+            <div class="social__head">
               <label for="telegram">Telegram</label>
-              <input id="telegram" name="telegram" type="text" placeholder="@johnsmith" maxlength="100" autocapitalize="off" spellcheck="false">
-              <span class="field__warn" id="telegram-warning" hidden></span>
+              <button type="button" class="social__remove" data-social-remove="telegram"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg><span class="sr-only"><span data-i18n="removeSocial">Remove</span> Telegram</span></button>
             </div>
-            <div class="field">
+            <input id="telegram" name="telegram" type="text" placeholder="@johnsmith" maxlength="100" autocapitalize="off" spellcheck="false">
+            <span class="field__hint" data-empty-hint="telegram" data-i18n="socialEmpty"></span>
+            <span class="field__warn" id="telegram-warning" hidden></span>
+          </div>
+          <div class="field social" data-social-field="whatsapp" hidden>
+            <div class="social__head">
               <label for="whatsapp">WhatsApp</label>
-              <input id="whatsapp" name="whatsapp" type="tel" placeholder="+380 50 123 4567" maxlength="30">
-              <label class="check">
-                <input type="checkbox" id="waSame">
-                <span data-i18n="waSame">Same as mobile</span>
-              </label>
-              <span class="field__warn" id="whatsapp-warning" hidden></span>
+              <button type="button" class="social__remove" data-social-remove="whatsapp"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg><span class="sr-only"><span data-i18n="removeSocial">Remove</span> WhatsApp</span></button>
             </div>
-            <div class="field">
+            <input id="whatsapp" name="whatsapp" type="tel" placeholder="+380 50 123 4567" maxlength="30">
+            <label class="check">
+              <input type="checkbox" id="waSame">
+              <span data-i18n="waSame">Same as mobile</span>
+            </label>
+            <span class="field__hint" data-empty-hint="whatsapp" data-i18n="socialEmpty"></span>
+            <span class="field__warn" id="whatsapp-warning" hidden></span>
+          </div>
+          <div class="field social" data-social-field="meeting" hidden>
+            <div class="social__head">
               <label for="meeting" data-i18n="fMeeting">Meeting booking link (Calendly, Google Calendar)</label>
-              <input id="meeting" name="meeting" type="url" inputmode="url" placeholder="calendly.com/john-smith" maxlength="300" autocapitalize="off" spellcheck="false">
-              <div class="choice" role="radiogroup" aria-label="Meeting link style">
-                <label class="check"><input type="radio" name="meetingStyle" value="button" checked> <span data-i18n="msButton">“Book a meeting” button</span></label>
-                <label class="check"><input type="radio" name="meetingStyle" value="icon"> <span data-i18n="msIcon">Calendar icon</span></label>
-              </div>
-              <span class="field__warn" id="meeting-warning" hidden></span>
+              <button type="button" class="social__remove" data-social-remove="meeting"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg><span class="sr-only"><span data-i18n="removeSocial">Remove</span> <span data-i18n="chipMeeting">Meeting link</span></span></button>
             </div>
+            <input id="meeting" name="meeting" type="url" inputmode="url" placeholder="calendly.com/john-smith" maxlength="300" autocapitalize="off" spellcheck="false">
+            <div class="choice" role="radiogroup" aria-label="Meeting link style">
+              <label class="check"><input type="radio" name="meetingStyle" value="button" checked> <span data-i18n="msButton">“Book a meeting” button</span></label>
+              <label class="check"><input type="radio" name="meetingStyle" value="icon"> <span data-i18n="msIcon">Calendar icon</span></label>
+            </div>
+            <span class="field__hint" data-empty-hint="meeting" data-i18n="meetingEmpty"></span>
+            <span class="field__warn" id="meeting-warning" hidden></span>
           </div>
-        </details>
+        </fieldset>
 
-        <div class="field">
-          <label for="promo" data-i18n="fPromo">Promo block</label>
-          <div class="select">
-            <select id="promo" name="promo"></select>
-          </div>
-        </div>
+        <fieldset class="section">
+          <legend class="section__title"><span class="section__num">5</span> <span data-i18n="fPromo">Promo block</span></legend>
+          <div class="promos" id="promo" role="radiogroup" aria-label="Promo block"></div>
+        </fieldset>
       </form>
     </section>
 
+    <div class="preview-col">
     <section class="panel panel--preview" aria-labelledby="preview-title">
       <div class="preview-head">
         <h2 id="preview-title" class="panel__title" data-i18n="previewTitle">Preview</h2>
-        <div class="seg" role="group" aria-label="Preview width">
-          <button type="button" class="seg__btn is-active" data-width="desktop" data-i18n="desktop">Desktop</button>
-          <button type="button" class="seg__btn" data-width="mobile" data-i18n="mobile">Mobile</button>
+        <div class="preview-head__controls">
+          <div class="seg" role="group" aria-label="Preview width">
+            <button type="button" class="seg__btn is-active" data-width="desktop" aria-pressed="true" data-i18n="desktop">Desktop</button>
+            <button type="button" class="seg__btn" data-width="mobile" aria-pressed="false" data-i18n="mobile">Mobile</button>
+          </div>
+          <div class="seg" role="group" aria-label="Mail theme">
+            <button type="button" class="seg__btn is-active" data-theme="light" aria-pressed="true" data-i18n="themeLight">Light mail</button>
+            <button type="button" class="seg__btn" data-theme="dark" aria-pressed="false" data-i18n="themeDark">Dark mail</button>
+          </div>
         </div>
       </div>
 
@@ -150,33 +196,50 @@
         </div>
         <iframe id="preview" class="mail__frame" title="Signature preview" scrolling="no"></iframe>
       </div>
+      <p class="preview-note" id="darkNote" data-i18n="darkNote" hidden></p>
 
       <div class="actions">
-        <button type="button" class="btn btn--primary" id="copyBtn">
+        <button type="button" class="btn btn--primary btn--lg" id="copyBtn">
           <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11v14z"/></svg>
           <span data-i18n="copy">Copy signature</span>
         </button>
-        <button type="button" class="btn" id="copyHtmlBtn" data-i18n="copyHtml">Copy HTML code</button>
-        <button type="button" class="btn" id="downloadBtn" data-i18n="download">Download .htm</button>
-        <button type="button" class="btn" id="copyLinkBtn" data-i18n="copyLink">Copy signature link</button>
+        <div class="more">
+          <button type="button" class="btn btn--lg" id="moreBtn" aria-expanded="false" aria-controls="moreMenu">
+            <span data-i18n="moreOptions">More options</span>
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="more__menu" id="moreMenu" hidden>
+            <button type="button" class="more__item" id="copyHtmlBtn" data-i18n="copyHtml">Copy HTML code</button>
+            <button type="button" class="more__item" id="downloadBtn" data-i18n="download">Download .htm</button>
+            <button type="button" class="more__item" id="copyLinkBtn" data-i18n="copyLink">Copy signature link</button>
+          </div>
+        </div>
       </div>
       <p class="hint" id="status" role="status" aria-live="polite"></p>
-
-      <div class="guide">
-        <h2 class="panel__title" data-i18n="howTitle">How to install the signature</h2>
-        <div class="tabs" role="tablist">
-          <button type="button" role="tab" class="tabs__btn is-active" aria-selected="true" data-tab="gmail">Gmail</button>
-          <button type="button" role="tab" class="tabs__btn" aria-selected="false" data-tab="outlook">Outlook</button>
-          <button type="button" role="tab" class="tabs__btn" aria-selected="false" data-tab="classic">Outlook Classic</button>
-        </div>
-
-        <ol class="steps" data-panel="gmail" data-i18n-html="gmailSteps"></ol>
-        <ol class="steps" data-panel="outlook" data-i18n-html="outlookSteps" hidden></ol>
-        <ol class="steps" data-panel="classic" data-i18n-html="classicSteps" hidden></ol>
-        <p class="guide__note" data-i18n="mobileNote"></p>
-      </div>
     </section>
+
+    <section class="panel panel--guide guide" id="install" aria-labelledby="install-title">
+      <h2 id="install-title" class="panel__title" data-i18n="howTitle">How to install the signature</h2>
+      <div class="tabs" role="tablist">
+        <button type="button" role="tab" class="tabs__btn is-active" aria-selected="true" data-tab="gmail">Gmail</button>
+        <button type="button" role="tab" class="tabs__btn" aria-selected="false" data-tab="outlook">Outlook</button>
+        <button type="button" role="tab" class="tabs__btn" aria-selected="false" data-tab="classic">Outlook Classic</button>
+      </div>
+
+      <ol class="steps" data-panel="gmail" data-i18n-html="gmailSteps"></ol>
+      <ol class="steps" data-panel="outlook" data-i18n-html="outlookSteps" hidden></ol>
+      <ol class="steps" data-panel="classic" data-i18n-html="classicSteps" hidden></ol>
+      <p class="guide__note" data-i18n="mobileNote"></p>
+    </section>
+    </div>
   </main>
+
+  <footer class="versions">
+    <span data-i18n="otherVersions">Other versions:</span>
+    <a href="c/" data-i18n="verLight">light design (beta)</a>
+    <span aria-hidden="true">·</span>
+    <a href="archive/" data-i18n="verArchive">previous design</a>
+  </footer>
 
   <script src="app.js"></script>
 </body>

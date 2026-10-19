@@ -1,6 +1,10 @@
 (function () {
   'use strict';
 
+  // Адреса цього скрипта: основна сторінка (/) і варіант C (/c/) підключають один app.js з кореня,
+  // тож папку assets/ шукаємо поруч зі скриптом, а не з поточною сторінкою.
+  var SCRIPT_URL = (document.currentScript && document.currentScript.src) || location.href;
+
   // Публічна адреса папки з зображеннями підпису (банер, іконка YouTube).
   // Порожньо = зображення беруться з того ж сервера, де розміщено цей застосунок.
   // Приклад: 'https://cdn.ajax.systems/email-signature/'
@@ -110,6 +114,32 @@
       copyFail: 'Не вдалося скопіювати автоматично. Виділіть підпис у прев\'ю мишею та натисніть Ctrl+C.',
       required: "Заповніть обов'язкові поля: ім'я, посаду та коректний email.",
       tooLong: 'Підпис довший за ліміт Gmail (10 000 символів).',
+      secDesign: 'Дизайн',
+      secContacts: 'Контакти',
+      secPhoto: 'Фото',
+      secSocial: 'Соцмережі та зустрічі',
+      optional: "(необов'язково)",
+      fPhotoUrl: 'Посилання на фото',
+      socialChipsHint: "Додайте потрібні мережі — іконки з'являться під контактами.",
+      chipMeeting: 'Запис на зустріч',
+      socialEmpty: "Заповніть — і іконка з'явиться в підписі.",
+      meetingEmpty: "Заповніть — і посилання з'явиться в підписі.",
+      removeSocial: 'Прибрати',
+      reqCount: "Заповнено {n} з 3 обов'язкових",
+      moreOptions: 'Інші варіанти',
+      themeLight: 'Світла пошта',
+      themeDark: 'Темна пошта',
+      darkNote: 'Приблизний вигляд: кожна поштова програма по-своєму перефарбовує листи в темній темі.',
+      copyThen: 'Потім вставте його в налаштуваннях пошти.',
+      sumComplete: 'Заповнено',
+      sumOptional: "Необов'язково",
+      sumPhotoEmpty: "Необов'язково · квадрат від 180 px",
+      sumPhotoSet: 'Додано',
+      cLead: 'Заповнюйте латиницею. Поля зберігаються в цьому браузері, щоб не вводити їх щоразу.',
+      otherVersions: 'Інші версії:',
+      verMain: 'основний дизайн',
+      verLight: 'світлий дизайн (бета)',
+      verArchive: 'попередній дизайн',
       howTitle: 'Як встановити підпис',
       gmailSteps:
         '<li>Натисніть <b>«Скопіювати підпис»</b>.</li>' +
@@ -179,6 +209,32 @@
       copyFail: 'Automatic copy failed. Select the signature in the preview with your mouse and press Ctrl+C.',
       required: 'Please fill in the required fields: name, job title and a valid email.',
       tooLong: 'The signature exceeds the Gmail limit (10,000 characters).',
+      secDesign: 'Design',
+      secContacts: 'Contacts',
+      secPhoto: 'Photo',
+      secSocial: 'Socials & meeting',
+      optional: '(optional)',
+      fPhotoUrl: 'Photo URL',
+      socialChipsHint: 'Add the networks you need — icons appear under your contacts.',
+      chipMeeting: 'Meeting link',
+      socialEmpty: 'Fill this in — the icon will appear in the signature.',
+      meetingEmpty: 'Fill this in — the link will appear in the signature.',
+      removeSocial: 'Remove',
+      reqCount: '{n} of 3 required filled',
+      moreOptions: 'More options',
+      themeLight: 'Light mail',
+      themeDark: 'Dark mail',
+      darkNote: 'Approximate view: every mail app recolors emails in dark mode in its own way.',
+      copyThen: 'Then paste it into your mail settings.',
+      sumComplete: 'Complete',
+      sumOptional: 'Optional',
+      sumPhotoEmpty: 'Optional · square, 180 px+',
+      sumPhotoSet: 'Added',
+      cLead: 'Fill in Latin characters. Fields are saved in this browser so you don’t have to retype them.',
+      otherVersions: 'Other versions:',
+      verMain: 'main design',
+      verLight: 'light design (beta)',
+      verArchive: 'previous design',
       howTitle: 'How to install the signature',
       gmailSteps:
         '<li>Click <b>“Copy signature”</b>.</li>' +
@@ -287,14 +343,14 @@
 
   function assetBase() {
     if (ASSET_BASE_URL) return ASSET_BASE_URL.replace(/\/?$/, '/');
-    return new URL('assets/', location.href).href;
+    return new URL('assets/', SCRIPT_URL).href;
   }
 
   function data() {
     var d = {};
     fields.forEach(function (f) { d[f] = $(f).value.trim(); });
     d.email = d.email ? d.email + '@' + EMAIL_DOMAIN : '';
-    d.promo = $('promo').value;
+    d.promo = promoValue();
     d.waSame = $('waSame').checked;
     d.meetingStyle = meetingStyle();
     d.design = design();
@@ -322,13 +378,63 @@
     return null;
   }
 
+  // Промо-блок — або випадаючий список (<select id="promo">), або картки-перемикачі в контейнері #promo.
+  function promoIsSelect() { return $('promo').tagName === 'SELECT'; }
+  function promoValue() {
+    if (promoIsSelect()) return $('promo').value;
+    var r = $('promo').querySelector('input[name="promo"]:checked');
+    return r ? r.value : '';
+  }
+  function setPromo(v) {
+    var value = v && findPromo(v) ? v : '';
+    if (promoIsSelect()) { $('promo').value = value; return; }
+    $('promo').querySelectorAll('input[name="promo"]').forEach(function (r) { r.checked = r.value === value; });
+  }
+
+  // Мініатюра картки промо: логотип, банер або іконка з рядком тексту.
+  function promoThumb(p) {
+    var thumb = document.createElement('span');
+    thumb.className = 'promo-card__thumb promo-card__thumb--' + (p ? p.type : 'none');
+    thumb.setAttribute('aria-hidden', 'true');
+    if (!p) return thumb;
+    var img = document.createElement('img');
+    img.alt = '';
+    if (p.type === 'link') {
+      img.src = assetBase() + p.icon.src;
+      img.width = p.icon.width; img.height = p.icon.height;
+      thumb.appendChild(img);
+      thumb.appendChild(document.createElement('b'));
+    } else {
+      img.src = assetBase() + p.image.src;
+      thumb.appendChild(img);
+    }
+    return thumb;
+  }
+
   function renderPromoOptions() {
-    var select = $('promo');
-    var value = select.value;
-    select.innerHTML = '';
-    select.appendChild(new Option(t('promoNone'), ''));
-    PROMO_LINKS.forEach(function (p) { select.appendChild(new Option(p.label[lang] || p.label.en, p.id)); });
-    select.value = value;
+    var value = promoValue();
+    var box = $('promo');
+    box.innerHTML = '';
+    if (promoIsSelect()) {
+      box.appendChild(new Option(t('promoNone'), ''));
+      PROMO_LINKS.forEach(function (p) { box.appendChild(new Option(p.label[lang] || p.label.en, p.id)); });
+      box.value = value;
+      return;
+    }
+    PROMO_LINKS.concat([null]).forEach(function (p) {
+      var label = document.createElement('label');
+      label.className = 'promo-card';
+      var input = document.createElement('input');
+      input.type = 'radio'; input.name = 'promo'; input.value = p ? p.id : '';
+      input.checked = input.value === value;
+      var name = document.createElement('span');
+      name.className = 'promo-card__name';
+      name.textContent = p ? (p.label[lang] || p.label.en) : t('promoNone').replace(/^—\s*|\s*—$/g, '');
+      label.appendChild(input);
+      label.appendChild(promoThumb(p));
+      label.appendChild(name);
+      box.appendChild(label);
+    });
   }
 
   // ---------- signature markup ----------
@@ -539,6 +645,10 @@
 
   // ---------- preview ----------
   var current = { html: '', plain: '' };
+  // «Темна пошта» — приблизна імітація: як Outlook, інвертуємо кольори тексту й фону, а картинки лишаємо як є.
+  // Лише для прев'ю: у скопійований підпис це не потрапляє.
+  var previewTheme = 'light';
+  var DARK_PREVIEW_CSS = 'html{background:#1f1f1f;}body{background:#e0e0e0;filter:invert(1) hue-rotate(180deg);}img{filter:invert(1) hue-rotate(180deg);}';
 
   function render() {
     var d = data();
@@ -547,13 +657,15 @@
 
     var doc = frame.contentDocument;
     doc.open();
-    doc.write('<!DOCTYPE html><html><head><meta charset="utf-8"><style>html,body{margin:0;padding:0;background:#fff;}</style></head><body>' + current.html + '</body></html>');
+    doc.write('<!DOCTYPE html><html><head><meta charset="utf-8"><style>html,body{margin:0;padding:0;background:#fff;}' +
+      (previewTheme === 'dark' ? DARK_PREVIEW_CSS : '') + '</style></head><body>' + current.html + '</body></html>');
     doc.close();
     fitFrame();
     var imgs = doc.images;
     for (var i = 0; i < imgs.length; i++) imgs[i].addEventListener('load', fitFrame);
 
     save(d);
+    updateProgress();
   }
 
   function fitFrame() {
@@ -580,7 +692,7 @@
     if ($('waSame').checked) p.set('wa', 'mobile');
     if ($('meeting').value.trim() && meetingStyle() === 'icon') p.set('ms', 'icon');
     if (design() !== DEFAULT_DESIGN) p.set('design', design());
-    if ($('promo').value !== DEFAULT_PROMO) p.set('promo', $('promo').value || 'none');
+    if (promoValue() !== DEFAULT_PROMO) p.set('promo', promoValue() || 'none');
     if (lang !== 'en') p.set('lang', lang);
     var qs = p.toString();
     return location.origin + location.pathname + (qs ? '?' + qs : '');
@@ -604,9 +716,9 @@
     setDesign(p.get('design'));
     if (p.has('promo')) {
       var promo = p.get('promo');
-      $('promo').value = promo === 'none' ? '' : (findPromo(promo) ? promo : DEFAULT_PROMO);
+      setPromo(promo === 'none' ? '' : (findPromo(promo) ? promo : DEFAULT_PROMO));
     } else {
-      $('promo').value = DEFAULT_PROMO;
+      setPromo(DEFAULT_PROMO);
     }
     if (p.has('lang') && hasLang(p.get('lang'))) lang = p.get('lang');
     $('prefillNotice').hidden = false;
@@ -621,7 +733,7 @@
         fields.forEach(function (f) {
           if (typeof s.d[f] === 'string') $(f).value = f === 'email' ? emailLocal(s.d[f]) : s.d[f];
         });
-        if (typeof s.d.promo === 'string') $('promo').value = findPromo(s.d.promo) ? s.d.promo : '';
+        if (typeof s.d.promo === 'string') setPromo(s.d.promo);
         if (typeof s.d.waSame === 'boolean') $('waSame').checked = s.d.waSame;
         if (typeof s.d.meetingStyle === 'string') setMeetingStyle(s.d.meetingStyle);
         if (typeof s.d.design === 'string') setDesign(s.d.design);
@@ -642,6 +754,7 @@
     });
     document.querySelectorAll('.lang__btn').forEach(function (b) { b.classList.toggle('is-active', b.dataset.lang === lang); });
     setStatus('');
+    updateProgress();
   }
 
   // ---------- validation ----------
@@ -671,11 +784,16 @@
   function flash(btn) {
     var label = btn.querySelector('[data-i18n]') || btn;
     clearTimeout(btn._flashTimer);
+    // data-fixed-width (варіант C): кнопка тримає свою ширину, поки показує «Copied!».
+    if (btn.hasAttribute('data-fixed-width') && !btn.classList.contains('btn--done')) {
+      btn.style.width = btn.getBoundingClientRect().width + 'px';
+    }
     btn.classList.add('btn--done');
     label.textContent = t('copied');
     btn._flashTimer = setTimeout(function () {
       btn.classList.remove('btn--done');
       label.textContent = t(label.getAttribute('data-i18n'));
+      btn.style.width = '';
     }, 1800);
   }
 
@@ -732,7 +850,7 @@
     if (!guard()) return;
     var btn = this;
     copyRich().then(function (ok) {
-      if (ok) { flash(btn); setStatus(t('copiedHint')); } else { setStatus(t('copyFail'), true); }
+      if (ok) { flash(btn); setStatus(t('copiedHint')); onCopied(); } else { setStatus(t('copyFail'), true); }
     });
   });
 
@@ -775,12 +893,14 @@
   function checkPhoto() {
     var url = $('photo').value.trim();
     var token = ++photoToken;
+    setPhotoThumb('');
     if (!url) return showPhotoWarning('');
     if (!isHttpsUrl(url)) return showPhotoWarning('photoNotHttps');
     if (isViewerLink(url)) return showPhotoWarning('photoDrive');
     var img = new Image();
     img.onload = function () {
       if (token !== photoToken) return;
+      setPhotoThumb(url);
       var w = img.naturalWidth, h = img.naturalHeight;
       if (Math.abs(w - h) / Math.max(w, h) > 0.02) showPhotoWarning('photoNotSquare');
       else if (Math.min(w, h) < PHOTO.minSource) showPhotoWarning('photoSmall');
@@ -837,22 +957,49 @@
     this.classList.toggle('is-invalid', !!v && !isEmailLocal(v));
   });
 
-  document.querySelectorAll('.seg__btn').forEach(function (b) {
+  // Перемикачі прев'ю: ширина (data-width) і тема пошти (data-theme) — кожна група незалежна.
+  function pressInGroup(attr, btn) {
+    document.querySelectorAll('[' + attr + ']').forEach(function (x) {
+      var on = x.getAttribute(attr) === btn.getAttribute(attr);
+      x.classList.toggle('is-active', on);
+      x.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+  }
+  document.querySelectorAll('[data-width]').forEach(function (b) {
     b.addEventListener('click', function () {
-      document.querySelectorAll('.seg__btn').forEach(function (x) { x.classList.toggle('is-active', x === b); });
+      pressInGroup('data-width', b);
       $('mail').classList.toggle('is-mobile', b.dataset.width === 'mobile');
       setTimeout(fitFrame, 320);
     });
   });
+  document.querySelectorAll('[data-theme]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      pressInGroup('data-theme', b);
+      previewTheme = b.dataset.theme === 'dark' ? 'dark' : 'light';
+      $('mail').classList.toggle('is-dark', previewTheme === 'dark');
+      if ($('darkNote')) $('darkNote').hidden = previewTheme !== 'dark';
+      render();
+    });
+  });
 
+  // Інструкції: обрана вкладка запам'ятовується в браузері.
+  var TAB_KEY = 'ajax-signature-tab';
+  function selectTab(name) {
+    var tabs = document.querySelectorAll('.tabs__btn');
+    var found = false;
+    tabs.forEach(function (x) { if (x.dataset.tab === name) found = true; });
+    if (!found) return;
+    tabs.forEach(function (x) {
+      var on = x.dataset.tab === name;
+      x.classList.toggle('is-active', on);
+      x.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+    document.querySelectorAll('.steps').forEach(function (p) { p.hidden = p.dataset.panel !== name; });
+  }
   document.querySelectorAll('.tabs__btn').forEach(function (b) {
     b.addEventListener('click', function () {
-      document.querySelectorAll('.tabs__btn').forEach(function (x) {
-        var on = x === b;
-        x.classList.toggle('is-active', on);
-        x.setAttribute('aria-selected', on ? 'true' : 'false');
-      });
-      document.querySelectorAll('.steps').forEach(function (p) { p.hidden = p.dataset.panel !== b.dataset.tab; });
+      selectTab(b.dataset.tab);
+      try { localStorage.setItem(TAB_KEY, b.dataset.tab); } catch (e) { /* noop */ }
     });
   });
 
@@ -860,19 +1007,126 @@
     b.addEventListener('click', function () { lang = b.dataset.lang; applyLang(); save(data()); });
   });
 
+  // ---------- progress: лічильник обов'язкових полів, галочки, підсумки секцій ----------
+  function requiredFilled() {
+    return [!!$('name').value.trim(), !!$('title').value.trim(), isEmailLocal($('email').value.trim())]
+      .filter(Boolean).length;
+  }
+  function setSummary(key, text, done) {
+    document.querySelectorAll('[data-summary="' + key + '"]').forEach(function (el) {
+      el.textContent = text;
+      el.classList.toggle('is-done', !!done);
+    });
+  }
+  function updateProgress() {
+    var n = requiredFilled();
+    var countText = t('reqCount').replace('{n}', n);
+    if ($('reqCount')) $('reqCount').textContent = countText;
+    if ($('reqBar')) $('reqBar').style.width = Math.round(n / 3 * 100) + '%';
+    $('name').classList.toggle('is-valid', !!$('name').value.trim());
+    $('title').classList.toggle('is-valid', !!$('title').value.trim());
+    $('email').classList.toggle('is-valid', isEmailLocal($('email').value.trim()));
+
+    updateEmptyHints();
+    setSummary('contacts', n === 3 ? t('sumComplete') : countText, n === 3);
+    var photo = isHttpsUrl($('photo').value.trim());
+    setSummary('photo', photo ? t('sumPhotoSet') : t('sumPhotoEmpty'), photo);
+    var d = data();
+    var social = socialLinks(d).map(function (s) { return s.alt; });
+    if (d.meetingStyle !== 'icon' && meetingUrl(d.meeting)) social.push(MEETING.text);
+    setSummary('social', social.length ? social.join(', ') : t('sumOptional'), social.length > 0);
+    var promo = findPromo(d.promo);
+    setSummary('promo', promo ? (promo.label[lang] || promo.label.en) : t('promoNone').replace(/^—\s*|\s*—$/g, ''), !!promo);
+  }
+
+  // Мініатюра фото біля поля: показуємо картинку, лише коли вона завантажилась.
+  function setPhotoThumb(url) {
+    var box = $('photoThumb');
+    if (!box) return;
+    var img = box.querySelector('img');
+    if (url) { img.src = url; box.classList.add('has-photo'); }
+    else { img.removeAttribute('src'); box.classList.remove('has-photo'); }
+  }
+
+  // ---------- соцмережі: кнопки «+ Додати» (основний дизайн) ----------
+  // «+ LinkedIn» відкриває поле й ховає саму кнопку; «×» біля поля прибирає мережу разом з даними.
+  // У підпис мережа потрапляє лише тоді, коли поле заповнене, — поки воно порожнє, під ним підказка.
+  function socialFilled(id) {
+    return !!$(id).value.trim() || (id === 'whatsapp' && $('waSame').checked);
+  }
+  function showSocial(id, on, focus) {
+    var add = document.querySelector('.chip[data-social="' + id + '"]');
+    var box = document.querySelector('[data-social-field="' + id + '"]');
+    if (!add || !box) return;
+    add.hidden = on;
+    box.hidden = !on;
+    if (!on) {
+      $(id).value = '';
+      if (id === 'whatsapp') { $('waSame').checked = false; syncWaSame(); }
+      checkSocial(id, false);
+    }
+    var chips = document.querySelector('.chips');
+    if (chips) chips.hidden = !chips.querySelector('.chip:not([hidden])');
+    // Фокус: на поле після «+ …», на кнопку «+ …» після «×».
+    if (focus) (on ? $(id) : add).focus();
+  }
+  function updateEmptyHints() {
+    // Дивимось на саме значення поля: «Same as mobile» з порожнім мобільним теж нічого не додає в підпис.
+    document.querySelectorAll('[data-empty-hint]').forEach(function (el) {
+      el.hidden = !!$(el.getAttribute('data-empty-hint')).value.trim();
+    });
+  }
+  document.querySelectorAll('.chip[data-social]').forEach(function (add) {
+    add.addEventListener('click', function () { showSocial(add.dataset.social, true, true); render(); });
+  });
+  document.querySelectorAll('[data-social-remove]').forEach(function (btn) {
+    btn.addEventListener('click', function () { showSocial(btn.getAttribute('data-social-remove'), false, true); render(); });
+  });
+
+  // ---------- меню «Інші варіанти» ----------
+  function setMenu(open) {
+    if (!$('moreMenu')) return;
+    $('moreMenu').hidden = !open;
+    $('moreBtn').setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+  if ($('moreBtn')) {
+    $('moreBtn').addEventListener('click', function (e) {
+      e.stopPropagation();
+      setMenu($('moreMenu').hidden);
+    });
+    document.addEventListener('click', function (e) {
+      if (!$('moreMenu').hidden && !$('moreMenu').contains(e.target)) setMenu(false);
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && !$('moreMenu').hidden) { setMenu(false); $('moreBtn').focus(); }
+    });
+  }
+
+  // Після копіювання — плавний перехід до інструкції, якщо її не видно.
+  function onCopied() {
+    var guide = $('install');
+    if (guide && guide.getBoundingClientRect().top > window.innerHeight - 80) {
+      guide.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
   window.addEventListener('resize', fitFrame);
 
   // ---------- init ----------
   renderPromoOptions();
-  $('promo').value = DEFAULT_PROMO;
+  setPromo(DEFAULT_PROMO);
   load();
   applyUrlParams();
   applyLang();
   syncWaSame();
   // Блок соцмереж згорнутий, але відкривається сам, якщо щось уже заповнено.
-  if ($('linkedin').value || $('telegram').value || $('whatsapp').value || $('waSame').checked || $('meeting').value) {
+  if ($('socialBlock') && ($('linkedin').value || $('telegram').value || $('whatsapp').value || $('waSame').checked || $('meeting').value)) {
     $('socialBlock').open = true;
   }
+  ['linkedin', 'telegram', 'whatsapp', 'meeting'].forEach(function (id) {
+    showSocial(id, socialFilled(id), false);
+  });
+  try { selectTab(localStorage.getItem(TAB_KEY)); } catch (e) { /* noop */ }
   render();
   checkPhoto();
 })();
