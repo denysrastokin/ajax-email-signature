@@ -51,7 +51,6 @@ button { font: inherit; color: inherit; }
 
 /* Form */
 .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; min-width: 0; }
-.field-row { display: grid; grid-template-columns: 1fr; }
 .field label { font-size: 13px; font-weight: 500; color: #333; }
 .req { color: var(--err); }
 .field input {

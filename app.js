@@ -55,7 +55,6 @@
       previewTitle: "Прев'ю",
       desktop: "Комп'ютер",
       mobile: 'Телефон',
-      regards: 'Kind regards,',
       noticeTitle: 'Зображення поки локальні.',
       noticeText: 'Розмістіть застосунок на публічному сервері (або вкажіть ASSET_BASE_URL в app.js), інакше банер та іконка не відобразяться в листах.',
       copy: 'Скопіювати підпис',
@@ -114,7 +113,6 @@
       previewTitle: 'Preview',
       desktop: 'Desktop',
       mobile: 'Mobile',
-      regards: 'Kind regards,',
       noticeTitle: 'Images are local for now.',
       noticeText: 'Host the app on a public server (or set ASSET_BASE_URL in app.js), otherwise the banner and icon will not show up in emails.',
       copy: 'Copy signature',
@@ -165,14 +163,15 @@
     });
   }
   function telHref(s) {
-    var t = s.trim();
+    // «(0)» у міжнародному форматі (+44 (0) 7749…) при наборі не використовується.
+    var t = s.trim().replace(/\(\s*0\s*\)/g, '');
     var digits = t.replace(/[^\d]/g, '');
     return 'tel:' + (t.charAt(0) === '+' ? '+' : '') + digits;
   }
   function isHttpsUrl(s) { return /^https:\/\/[^\s"'<>]+$/i.test(s || ''); }
   function isViewerLink(s) { return /(drive\.google\.com|docs\.google\.com|1drv\.ms|onedrive\.live\.com|sharepoint\.com)/i.test(s); }
   function isEmail(s) { return /^[^\s@<>"]+@[^\s@<>"]+\.[^\s@<>"]{2,}$/.test(s); }
-  function t(key) { return I18N[lang][key] || I18N.uk[key] || ''; }
+  function t(key) { return I18N[lang][key] || I18N.en[key] || ''; }
 
   function assetBase() {
     if (ASSET_BASE_URL) return ASSET_BASE_URL.replace(/\/?$/, '/');
@@ -379,12 +378,17 @@
     s.classList.toggle('is-error', !!isError);
   }
 
+  // Після анімації повертаємо підпис кнопки з перекладів, а не з тексту на момент кліку:
+  // інакше повторний клік під час анімації назавжди залишить «Copied!».
   function flash(btn) {
-    var label = btn.querySelector('span') || btn;
-    var prev = label.textContent;
+    var label = btn.querySelector('[data-i18n]') || btn;
+    clearTimeout(btn._flashTimer);
     btn.classList.add('btn--done');
     label.textContent = t('copied');
-    setTimeout(function () { btn.classList.remove('btn--done'); label.textContent = prev; }, 1800);
+    btn._flashTimer = setTimeout(function () {
+      btn.classList.remove('btn--done');
+      label.textContent = t(label.getAttribute('data-i18n'));
+    }, 1800);
   }
 
   function copyRich() {
